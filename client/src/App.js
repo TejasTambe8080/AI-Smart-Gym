@@ -6,7 +6,7 @@ import Layout from './components/Layout';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
-import DashboardImproved from './pages/DashboardImproved';
+import EnhancedDashboard from './pages/EnhancedDashboard';
 import WorkoutRefactored from './pages/WorkoutRefactored';
 import PostureCorrection from './pages/PostureCorrection';
 import ActivityImproved from './pages/ActivityImproved';
@@ -14,12 +14,13 @@ import AnalyticsImproved from './pages/AnalyticsImproved';
 import AISuggestionsImproved from './pages/AISuggestionsImproved';
 import Diet from './pages/Diet';
 import ProfileImproved from './pages/ProfileImproved';
+import AIChatCoach from './pages/AIChatCoach';
+import AIWorkoutPlanner from './pages/AIWorkoutPlanner';
 import Settings from './pages/Settings';
-import './index.css';
 
 function App() {
   return (
-    <Router>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<Landing />} />
@@ -33,12 +34,14 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Routes>
-                  <Route path="/dashboard" element={<DashboardImproved />} />
+                  <Route path="/dashboard" element={<EnhancedDashboard />} />
                   <Route path="/workout" element={<WorkoutRefactored />} />
+                  <Route path="/ai-workout" element={<AIWorkoutPlanner />} />
                   <Route path="/posture" element={<PostureCorrection />} />
                   <Route path="/activity" element={<ActivityImproved />} />
                   <Route path="/analytics" element={<AnalyticsImproved />} />
                   <Route path="/suggestions" element={<AISuggestionsImproved />} />
+                  <Route path="/ai-coach" element={<AIChatCoach />} />
                   <Route path="/diet" element={<Diet />} />
                   <Route path="/profile" element={<ProfileImproved />} />
                   <Route path="/settings" element={<Settings />} />

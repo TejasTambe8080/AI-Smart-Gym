@@ -1,5 +1,6 @@
 // Workout Controller - Handles CRUD operations for workouts
 const Workout = require('../models/Workout');
+const statsController = require('./statsController');
 
 // @route   POST /api/workouts
 // @desc    Create a new workout session
@@ -39,6 +40,14 @@ exports.createWorkout = async (req, res) => {
     });
 
     await workout.save();
+
+    // Update user stats and trigger notifications
+    try {
+      await statsController.updateStatsAfterWorkout(req.userId, workout);
+    } catch (statsError) {
+      console.error('Error updating stats:', statsError);
+      // Don't fail the response if stats update fails
+    }
 
     res.status(201).json({
       message: 'Workout created successfully',

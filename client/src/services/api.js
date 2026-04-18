@@ -37,7 +37,7 @@ export const workoutService = {
 // Exercise Services
 export const exerciseService = {
   getAllExercises: (params) => api.get('/exercises', { params }),
-  getExercisesByMuscleGroup: (muscleGroup) => api.get(`/exercises/group/${muscleGroup}`),
+  getExercisesByMuscleGroup: (muscleGroup) => api.get(`/exercises/${muscleGroup}`),
   getExerciseById: (id) => api.get(`/exercises/${id}`),
   getMuscleGroups: () => api.get('/exercises/groups/list/all'),
   getExercisesByDifficulty: (level) => api.get(`/exercises/difficulty/${level}`),

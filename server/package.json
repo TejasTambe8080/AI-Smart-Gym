@@ -5,16 +5,19 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "seed": "node seed.js",
+    "seed:watch": "nodemon seed.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "mongoose": "^7.0.0",
-    "dotenv": "^16.0.3",
+    "@google/generative-ai": "^0.24.1",
     "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.0",
     "cors": "^2.8.5",
-    "express-validator": "^7.0.0"
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "express-validator": "^7.0.0",
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "^7.0.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.20"

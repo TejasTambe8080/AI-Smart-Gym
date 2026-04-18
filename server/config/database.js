@@ -11,7 +11,8 @@ const connectDB = async () => {
     return conn;
   } catch (error) {
     console.error(`Error connecting to MongoDB: ${error.message}`);
-    process.exit(1);
+    console.warn('⚠️ Running in fallback mode without MongoDB. Exercise API will use local fallback data.');
+    return null;
   }
 };
 

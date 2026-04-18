@@ -1,52 +1,59 @@
-# 🏋️ AI-Based Smart Gym - Intelligent Fitness Platform
+# 🏋️ FormFix AI - Premium AI-Powered Fitness Platform
 
-A full-stack intelligent fitness application that combines **AI-powered posture detection**, **real-time rep counting**, **performance analytics**, and **dynamic exercise database** to deliver a modern fitness experience.
+A full-stack intelligent fitness application combining **AI-powered form detection**, **real-time rep counting**, **advanced analytics**, and **personalized coaching** to deliver a premium fitness experience.
 
-## ✨ Features
+## ✨ Premium Features
 
-### 👤 User Management
-- **Authentication System** - Secure signup/login with JWT
-- **Profile Management** - Track user data and preferences
-- **Personalized Dashboard** - View stats, progress, and recommendations
+### 🤖 AI-Powered Features
+- **🏋️ Real-Time Form Detection** - MediaPipe-based posture analysis
+- **📊 Form Score System** - Weighted formula: (Posture×0.4) + (Reps×0.3) + (Consistency×0.3)
+- **⚡ Automated Rep Counting** - Accurate detection with real-time feedback
+- **🧠 AI Workout Planner** - Gemini-powered 7-day personalized plans
+- **🎙️ AI Coach Chat** - Real-time coaching with instant responses
+- **💪 Weak Muscle Detection** - Analyze history, identify weak groups
+- **🚨 Injury Risk Detection** - Monitor form degradation, alert system
 
-### 🏋️ Dynamic Exercise System
-- **Database-Driven Exercises** - 21+ real exercises with detailed instructions
-- **Muscle Group Filtering** - Browse exercises by target muscle group
-- **Difficulty Levels** - Exercises categorized as Beginner, Intermediate, Advanced
-- **Exercise Details** - Full descriptions, form instructions, equipment info, calorie estimates
+### 🎮 Gamification System
+- **🔥 Streak Tracking** - Build daily workout streaks with notifications
+- **🏆 Badge Achievements** - Earn badges for milestones (7-day, 100 reps, 1 hour, etc.)
+- **📈 Level System** - Progress through levels (1-10+) with XP tracking
+- **🥇 Leaderboards** - Compare with other users (premium feature)
 
-### 🤖 AI-Powered Workout Features
-- **Real-Time Posture Detection** - MediaPipe-based form detection
-- **Automated Rep Counting** - Accurate rep detection with AI
-- **Posture Scoring** - 0-100% form accuracy feedback
-- **Performance Analytics** - Detailed metrics and suggestions
+### 📊 Advanced Analytics
+- **Dashboard Metrics** - Total workouts, duration, posture %, calories
+- **Performance Trends** - Form score history, weekly progress, muscle balance
+- **Personal Records** - Track max weight, best form, fastest reps
+- **Weekly Goals** - Set targets (1-7 workouts/week) with progress tracking
 
-### 📊 Analytics Dashboard
-- **Workout History** - Track all completed workouts
-- **Performance Metrics** - Reps, duration, calories, posture score
-- **Progress Charts** - Visual representation of fitness journey
-- **AI Suggestions** - Personalized tips to improve form and performance
+### 👤 User Personalization
+- **Profile Management** - Height, weight, goals, experience level
+- **Settings Configuration** - Notifications, voice feedback, sound effects, preferences
+- **Fitness Goals** - Muscle gain, weight loss, strength, endurance, flexibility
+- **Experience Levels** - Beginner, Intermediate, Advanced, Elite
 
-### 🎙️ Voice Feedback System
-- **Real-Time Coaching** - Voice prompts during workouts
-- **Audio Cues** - Rep counting and form corrections
-- **Performance Announcements** - Voice feedback on completion
+### 🏋️ Workout System
+- **21+ Real Exercises** - Database-driven with full instructions
+- **Posture Correction** - Real-time form feedback with visual guides
+- **Custom Workouts** - Create and save personalized workout plans
+- **AI-Generated Plans** - Personalized 7-day workout plans from Gemini
 
-### 🎨 Modern UI
-- **Professional Design** - Tailwind CSS responsive interface
-- **SaaS-Style Layout** - Modern metrics and cards
-- **Real-Time Updates** - Live workout tracking
-- **Dark/Light Themes** - Adaptive color schemes
+### 📱 Modern SaaS UI
+- **Premium Dark Theme** - Gradient backgrounds, elevated cards
+- **Responsive Design** - Optimized for mobile, tablet, desktop
+- **Smooth Animations** - Transitions, hover effects, loading states
+- **Intuitive Navigation** - Sidebar menu with color-coded sections
 
 ## 🛠️ Tech Stack
 
 ### Frontend
 ```
-React 18
-React Router DOM (Navigation)
-Tailwind CSS (Styling)
-Axios (API Calls)
+React 18 with Hooks
+React Router v6 (Navigation)
+Tailwind CSS (Premium dark theme)
+Axios (API Integration)
 MediaPipe (Pose Detection)
+Recharts (Analytics)
+Google Generative AI
 ```
 
 ### Backend

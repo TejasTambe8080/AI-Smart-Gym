@@ -1,5 +1,17 @@
 // Exercises Controller - Fetches and manages exercises
+const mongoose = require('mongoose');
 const Exercise = require('../models/Exercise');
+const EXERCISE_FALLBACK_DATA = require('../data/exerciseFallbackData');
+
+const isDatabaseConnected = () => mongoose.connection.readyState === 1;
+
+const getFallbackExercises = (muscleGroup, difficulty) => {
+  return EXERCISE_FALLBACK_DATA.filter((exercise) => {
+    const matchMuscle = muscleGroup ? exercise.muscleGroup === muscleGroup : true;
+    const matchDifficulty = difficulty ? exercise.difficulty === difficulty : true;
+    return matchMuscle && matchDifficulty;
+  }).sort((a, b) => a.name.localeCompare(b.name));
+};
 
 /**
  * @desc    Get all exercises or filter by muscle group
@@ -20,14 +32,12 @@ exports.getExercises = async (req, res, next) => {
       query.difficulty = difficulty.toLowerCase();
     }
 
-    const exercises = await Exercise.find(query).sort({ muscleGroup: 1, name: 1 });
+    let exercises;
 
-    if (!exercises || exercises.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'No exercises found',
-        data: [],
-      });
+    if (isDatabaseConnected()) {
+      exercises = await Exercise.find(query).sort({ muscleGroup: 1, name: 1 });
+    } else {
+      exercises = getFallbackExercises(query.muscleGroup, query.difficulty);
     }
 
     res.status(200).json({
@@ -47,24 +57,31 @@ exports.getExercises = async (req, res, next) => {
  */
 exports.getExercisesByMuscleGroup = async (req, res, next) => {
   try {
-    const { muscleGroup } = req.params;
-    
-    const exercises = await Exercise.find({
-      muscleGroup: muscleGroup.toLowerCase(),
-    }).sort({ difficulty: 1, name: 1 });
+    const muscleGroup = (req.params.muscleGroup || req.params.muscle || '').toLowerCase();
+    const allowedMuscleGroups = ['chest', 'back', 'biceps', 'triceps', 'legs', 'abs', 'cardio'];
 
-    if (!exercises || exercises.length === 0) {
-      return res.status(404).json({
+    if (!muscleGroup || !allowedMuscleGroups.includes(muscleGroup)) {
+      return res.status(400).json({
         success: false,
-        message: `No exercises found for muscle group: ${muscleGroup}`,
-        data: [],
+        message: 'Invalid muscle group',
+        allowedMuscleGroups,
       });
+    }
+    
+    let exercises;
+
+    if (isDatabaseConnected()) {
+      exercises = await Exercise.find({
+        muscleGroup,
+      }).sort({ difficulty: 1, name: 1 });
+    } else {
+      exercises = getFallbackExercises(muscleGroup);
     }
 
     res.status(200).json({
       success: true,
       count: exercises.length,
-      muscleGroup: muscleGroup.toLowerCase(),
+      muscleGroup,
       data: exercises,
     });
   } catch (error) {
@@ -105,15 +122,25 @@ exports.getExerciseById = async (req, res, next) => {
  */
 exports.getMuscleGroups = async (req, res, next) => {
   try {
-    const groups = await Exercise.distinct('muscleGroup');
-    
-    // Get count for each group
-    const groupStats = await Promise.all(
-      groups.map(async (group) => {
-        const count = await Exercise.countDocuments({ muscleGroup: group });
-        return { group, count };
-      })
-    );
+    let groupStats;
+
+    if (isDatabaseConnected()) {
+      const groups = await Exercise.distinct('muscleGroup');
+
+      groupStats = await Promise.all(
+        groups.map(async (group) => {
+          const count = await Exercise.countDocuments({ muscleGroup: group });
+          return { group, count };
+        })
+      );
+    } else {
+      const groupCountMap = EXERCISE_FALLBACK_DATA.reduce((acc, exercise) => {
+        acc[exercise.muscleGroup] = (acc[exercise.muscleGroup] || 0) + 1;
+        return acc;
+      }, {});
+
+      groupStats = Object.entries(groupCountMap).map(([group, count]) => ({ group, count }));
+    }
 
     res.status(200).json({
       success: true,

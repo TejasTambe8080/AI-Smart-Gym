@@ -6,6 +6,12 @@ const connectDB = require('./config/database');
 const authRoutes = require('./routes/authRoutes');
 const workoutRoutes = require('./routes/workoutRoutes');
 const exerciseRoutes = require('./routes/exerciseRoutes');
+const suggestionRoutes = require('./routes/suggestionRoutes');
+const aiRoutes = require('./routes/aiRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const statsRoutes = require('./routes/statsRoutes');
+const insightsRoutes = require('./routes/insightsRoutes');
+const weeklyPlanRoutes = require('./routes/weeklyPlanRoutes');
 const errorHandler = require('./middleware/errorHandler');
 const logger = require('./middleware/logger');
 
@@ -27,6 +33,12 @@ app.use(logger);
 app.use('/api/auth', authRoutes);
 app.use('/api/workouts', workoutRoutes);
 app.use('/api/exercises', exerciseRoutes);
+app.use('/api/suggestions', suggestionRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/stats', statsRoutes);
+app.use('/api/insights', insightsRoutes);
+app.use('/api/weekly-plan', weeklyPlanRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {

@@ -20,7 +20,8 @@ router.get('/group/:muscleGroup', getExercisesByMuscleGroup);
 router.get('/difficulty/:level', getExercisesByDifficulty);
 router.get('/search/:query', searchExercises);
 router.get('/', getExercises);
-router.get('/:id', getExerciseById);
+router.get('/:id([0-9a-fA-F]{24})', getExerciseById);
+router.get('/:muscle(chest|back|biceps|triceps|legs|abs|cardio)', getExercisesByMuscleGroup);
 
 // Admin routes (would require auth middleware in production)
 router.post('/', createExercise);
