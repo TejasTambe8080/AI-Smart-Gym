@@ -13,6 +13,22 @@ export class VoiceFeedback {
     this.enabled = enabled;
   }
 
+  // Bilingual translation map
+  getTranslation(message) {
+    const translations = {
+      'Keep your back straight, lean less forward': 'अपनी पीठ सीधी रखें, आगे कम झुकें',
+      'Knees tracking over toes, move knees back': 'घुटनों को पीछे रखें',
+      'Keep shoulders level and aligned': 'कंधों को सीधा रखें',
+      'Good posture! Keep it up!': 'बहुत अच्छे! करते रहें',
+      'Excellent performance! Keep it up!': 'उत्कृष्ट प्रदर्शन! इसे जारी रखें!',
+      'Good job! Well done!': 'अच्छा काम! बहुत बढ़िया!',
+      'Average performance. Try to improve your form.': 'औसत प्रदर्शन। अपने फॉर्म को सुधारने का प्रयास करें।',
+      'Focus on good form and technique.': 'अच्छे फॉर्म और तकनीक पर ध्यान दें।',
+      'Keep your back straight - avoid leaning forward': 'अपनी पीठ सीधी रखें - आगे झुकने से बचें'
+    };
+    return translations[message] || '';
+  }
+
   // Check if can speak (cooldown check)
   canSpeak() {
     const now = Date.now();
@@ -24,7 +40,7 @@ export class VoiceFeedback {
   }
 
   // Speak message with Web Speech API
-  speak(message, rate = 0.9, pitch = 1.0) {
+  speak(message, rate = 0.9, pitch = 1.0, lang = 'en-US') {
     if (!this.enabled || !this.canSpeak()) {
       return;
     }
@@ -36,19 +52,44 @@ export class VoiceFeedback {
     utterance.rate = rate;
     utterance.pitch = pitch;
     utterance.volume = 1.0;
+    utterance.lang = lang;
 
     this.synth.speak(utterance);
     this.speaker = utterance;
+  }
+
+  // Speak Bilingual (English then Hindi)
+  speakBilingual(engMessage) {
+    if (!this.enabled || !this.canSpeak()) return;
+
+    this.synth.cancel();
+
+    const hindiMessage = this.getTranslation(engMessage);
+    
+    const engUtterance = new SpeechSynthesisUtterance(engMessage);
+    engUtterance.lang = 'en-US';
+    engUtterance.rate = 0.9;
+    
+    this.synth.speak(engUtterance);
+
+    if (hindiMessage) {
+      engUtterance.onend = () => {
+        const hindiUtterance = new SpeechSynthesisUtterance(hindiMessage);
+        hindiUtterance.lang = 'hi-IN';
+        hindiUtterance.rate = 0.85;
+        this.synth.speak(hindiUtterance);
+      };
+    }
   }
 
   // Provide posture feedback
   feedbackPosture(feedback) {
     if (Array.isArray(feedback)) {
       feedback.forEach((msg) => {
-        this.speak(msg, 0.85, 1.1);
+        this.speakBilingual(msg);
       });
     } else {
-      this.speak(feedback, 0.85, 1.1);
+      this.speakBilingual(feedback);
     }
   }
 
