@@ -8,12 +8,12 @@ const {
   deleteWorkout,
   getWorkoutStats,
 } = require('../controllers/workoutController');
-const authMiddleware = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 
 const router = express.Router();
 
 // All workout routes require authentication
-router.use(authMiddleware);
+router.use(protect);
 
 // Stats route (place before :id to avoid conflicts)
 router.get('/stats/summary', getWorkoutStats);

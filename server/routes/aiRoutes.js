@@ -1,14 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const aiController = require('../controllers/aiController');
+const { protect } = require('../middleware/auth');
 
-// Route for generating personalized fitness & diet plan
+// All AI routes are protected
+router.use(protect);
+
 router.post('/diet', aiController.getDietPlan);
-
-// Route for AI Coach Chat
-router.post('/coach', aiController.askAICoach);
-
-// Route for generating workout plan
-router.post('/generate-workout', aiController.generateWorkoutPlan);
+router.post('/suggestions', aiController.getWorkoutSuggestions);
+router.post('/insights', aiController.getPerformanceInsights);
 
 module.exports = router;

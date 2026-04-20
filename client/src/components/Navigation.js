@@ -14,7 +14,9 @@ const Navigation = () => {
     { path: '/workout', label: 'Workout', icon: '🏋️' },
     { path: '/activity', label: 'Activity', icon: '📝' },
     { path: '/analytics', label: 'Analytics', icon: '📈' },
+    { path: '/journey', label: 'Journey', icon: '💎' },
     { path: '/ai-coach', label: 'AI Coach', icon: '🤖' },
+
     { path: '/suggestions', label: 'Suggestions', icon: '💡' },
     { path: '/diet', label: 'Diet', icon: '🥗' },
     { path: '/profile', label: 'Profile', icon: '👤' },

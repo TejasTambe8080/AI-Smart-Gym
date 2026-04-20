@@ -1,83 +1,70 @@
-// Smart Weekly Planner - Generates AI personalized weekly workout plans
+// Smart Weekly Planner - Generates AI personalized weekly workout plans using Gemini
 const UserStats = require('../models/UserStats');
 const Workout = require('../models/Workout');
+const User = require('../models/User');
+const { generateAIResponse } = require('../services/geminiService');
 
 // Generate a personalized weekly workout plan
 exports.generateWeeklyPlan = async (userId) => {
   try {
-    const stats = await UserStats.findOne({ userId });
-    const user = await require('../models/User').findById(userId);
+    const [stats, user, recentWorkouts] = await Promise.all([
+      UserStats.findOne({ userId }),
+      User.findById(userId),
+      Workout.find({ userId }).sort({ date: -1 }).limit(10)
+    ]);
 
-    if (!stats) {
-      return {
-        success: false,
-        message: 'No stats available. Complete a few workouts first.'
-      };
-    }
+    const weakMuscles = stats?.weakMuscles || [];
+    const goal = user?.fitnessGoal || 'General Fitness';
+    const streak = stats?.currentStreak || 0;
 
-    const weeklyPlan = [];
-    const weakMuscles = stats.weakMuscles || [];
-    const fitnessLevel = user?.fitnessGoal || 'maintain';
+    const prompt = `
+      Act as an elite AI fitness architect. Generate a 7-day adaptive workout plan for a user with the following profile:
+      - Primary Goal: ${goal}
+      - Current Streak: ${streak} days
+      - Biometric Gaps (Weak Muscles): ${weakMuscles.join(', ') || 'None identified'}
+      - Recent Activity: ${recentWorkouts.map(w => w.exerciseType).join(', ')}
 
-    // Get user's weekly goal
-    const weeklyGoal = stats.weeklyGoal || 4;
-    const daysPerWeek = Math.min(weeklyGoal, 6);
+      Requirements:
+      1. Create a balanced 7-day cycle.
+      2. Include 1-2 rest/recovery days.
+      3. Focus heavily on correcting weak muscles without overtraining.
+      4. Suggest specific exercises, sets, and reps for each training day.
 
-    // Create a balanced 7-day plan
-    const days = [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday'
-    ];
-
-    // Determine which days to train
-    const trainingDays = selectTrainingDays(daysPerWeek);
-
-    for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
-      const day = days[dayIdx];
-      const isTrainingDay = trainingDays.includes(dayIdx);
-
-      if (isTrainingDay) {
-        const workout = generateDayWorkout(dayIdx, weakMuscles, fitnessLevel);
-        weeklyPlan.push({
-          day,
-          dayIdx,
-          exercises: workout.exercises,
-          focus: workout.focus,
-          intensity: workout.intensity,
-          estimatedDuration: workout.estimatedDuration,
-          tips: workout.tips
-        });
-      } else {
-        weeklyPlan.push({
-          day,
-          dayIdx,
-          exercises: [],
-          focus: 'Rest Day',
-          intensity: 'rest',
-          estimatedDuration: 0,
-          tips: ['Active recovery', 'Stretching', 'Meal prep for next workout']
-        });
+      JSON Format ONLY:
+      {
+        "plan": [
+          {"day": "Monday", "focus": "Upper Body", "exercises": [{"name": "Pushups", "reps": "3x12"}], "isRest": false},
+          ... up to Sunday
+        ],
+        "strategy": "High-level goal for the week",
+        "tips": ["Tip 1", "Tip 2"]
       }
+    `;
+
+    const aiResponse = await generateAIResponse(prompt);
+    const jsonStr = aiResponse.replace(/```json|```/g, '').trim();
+    
+    let structuredPlan;
+    try {
+      structuredPlan = JSON.parse(jsonStr);
+    } catch (e) {
+      console.error('Gemini Plan Parsing Failed:', e);
+      // Minimal fallback
+      structuredPlan = { plan: [], strategy: "Recovery focus", tips: [] };
     }
 
     return {
       success: true,
-      weeklyPlan,
-      totalWeeklyWorkouts: daysPerWeek,
-      focusAreas: weakMuscles.slice(0, 2),
-      recommendations: generatePlanRecommendations(stats, fitnessLevel),
-      nextReviewDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      data: structuredPlan,
+      generatedAt: new Date()
     };
+
   } catch (error) {
     console.error('Error generating weekly plan:', error);
     return { success: false, error: error.message };
   }
 };
+
 
 // Select which days to train (spread across week for recovery)
 function selectTrainingDays(count) {

@@ -1,11 +1,11 @@
-// Login Page Component - Modern Design
+// Login Page Component - Premium Modern Design
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/api';
+import { toast } from 'react-hot-toast';
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -15,121 +15,105 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     try {
       const response = await authService.login(formData);
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
+      toast.success('Welcome back! You are logged in! 👋');
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      toast.error(err.response?.data?.message || 'Authentication failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-cyan-700 flex items-center justify-center p-6">
-      {/* Animated Background Shapes */}
-      <div className="absolute top-0 left-0 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-cyan-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Dynamic Background Elements */}
+      <div className="absolute top-0 -left-20 w-96 h-96 bg-blue-600 rounded-full mix-blend-screen filter blur-[100px] opacity-10 animate-pulse"></div>
+      <div className="absolute bottom-0 -right-20 w-96 h-96 bg-purple-600 rounded-full mix-blend-screen filter blur-[100px] opacity-10 animate-pulse"></div>
 
-      <div className="relative z-10 w-full max-w-md">
-        {/* Logo Section */}
-        <div className="text-center mb-8">
-          <div className="inline-block bg-gradient-to-br from-green-400 to-cyan-500 rounded-2xl p-4 mb-4">
-            <span className="text-5xl">💪</span>
+      <div className="relative z-10 w-full max-w-md animate-enter">
+        {/* Branding */}
+        <div className="text-center mb-10">
+          <div className="inline-block bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-4 mb-4 shadow-2xl shadow-blue-500/20">
+             <span className="text-5xl drop-shadow-lg">💪</span>
           </div>
-          <h1 className="text-4xl font-bold text-white mb-2">AI Gym Coach</h1>
-          <p className="text-blue-100 text-lg">Your Personal Fitness AI</p>
+          <h1 className="text-4xl font-black text-white tracking-tighter mb-2">Smart Gym AI</h1>
+          <p className="text-slate-400 font-medium">Welcome back to your fitness journey</p>
         </div>
 
-        {/* Login Card */}
-        <div className="bg-white rounded-3xl shadow-2xl p-8 backdrop-blur-md">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome Back</h2>
-          <p className="text-gray-600 mb-8">Sign in to continue your fitness journey</p>
+        {/* Logic Container */}
+        <div className="glass-card p-10 rounded-[2.5rem] border-slate-800/80">
+          <div className="space-y-1 mb-8">
+             <h2 className="text-2xl font-black text-white tracking-tight">Sign In</h2>
+             <p className="text-slate-500 text-sm font-medium">Enter your email and password to continue</p>
+          </div>
 
-          {/* Error Message */}
-          {error && (
-            <div className="mb-6 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-lg flex items-start gap-3">
-              <span className="text-xl">⚠️</span>
-              <p className="font-semibold">{error}</p>
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email Input */}
-            <div>
-              <label className="block text-sm font-bold text-gray-900 mb-2">Email Address</label>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Email Address</label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition"
+                className="input-field"
                 placeholder="you@example.com"
                 required
               />
             </div>
 
-            {/* Password Input */}
-            <div>
-              <label className="block text-sm font-bold text-gray-900 mb-2">Password</label>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Password</label>
               <input
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition"
-                placeholder="••••••••"
+                className="input-field"
+                placeholder="••••••••••••"
                 required
               />
             </div>
 
-            {/* Remember & Forgot */}
-            <div className="flex justify-between items-center text-sm">
-              <label className="flex items-center gap-2 text-gray-600">
-                <input type="checkbox" className="rounded w-4 h-4" />
-                Remember me
+            <div className="flex justify-between items-center text-xs">
+              <label className="flex items-center gap-2 text-slate-500 cursor-pointer group">
+                <input type="checkbox" className="rounded-md bg-slate-800 border-slate-700 text-blue-600 focus:ring-0" />
+                <span className="group-hover:text-slate-300 transition-colors">Remember me</span>
               </label>
-              <a href="#" className="text-blue-600 hover:text-blue-700 font-semibold">
+              <a href="#" className="text-blue-500 hover:text-blue-400 font-black tracking-tight">
                 Forgot password?
               </a>
             </div>
 
-            {/* Login Button */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl font-bold text-lg hover:shadow-lg transition disabled:opacity-50 mt-8"
+              className="w-full btn-primary h-14"
             >
-              {loading ? '🔄 Logging in...' : '🚀 Login'}
+              {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="flex items-center gap-3 my-6">
-            <div className="flex-1 h-px bg-gray-200"></div>
-            <span className="text-gray-500 text-sm">or</span>
-            <div className="flex-1 h-px bg-gray-200"></div>
+          <div className="mt-10 pt-8 border-t border-slate-800">
+             <p className="text-center text-slate-500 text-sm font-medium">
+               Don't have an account?{' '}
+               <Link to="/signup" className="text-blue-500 hover:text-blue-400 font-black px-1 transition-colors">
+                 Create one
+               </Link>
+             </p>
           </div>
-
-          {/* Sign Up Link */}
-          <p className="text-center text-gray-600">
-            Don't have an account?{' '}
-            <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-bold">
-              Sign up now
-            </Link>
-          </p>
         </div>
 
-        {/* Footer */}
-        <p className="text-center text-blue-100 mt-8 text-sm">
-          By logging in, you agree to our Terms of Service and Privacy Policy
-        </p>
+        {/* Status Line */}
+        <div className="mt-8 flex justify-center items-center gap-2">
+           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+           <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Secure Connection</p>
+        </div>
       </div>
     </div>
   );

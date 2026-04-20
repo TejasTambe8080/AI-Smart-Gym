@@ -1,6 +1,7 @@
 // Authentication Controller - Handles signup and login
-const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const userService = require('../services/userService');
 
 // Generate JWT token
 const generateToken = (userId) => {
@@ -22,39 +23,47 @@ exports.signup = async (req, res) => {
     }
 
     // Check if user already exists
-    let user = await User.findOne({ email });
-    if (user) {
+    const existingUser = userService.findUserByEmail(email);
+    if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
     // Create new user
-    user = new User({
+    const user = userService.createUser({
       name,
       email,
-      password,
+      password: hashedPassword,
       age,
       weight,
       height,
       fitnessGoal,
     });
 
-    await user.save();
-
     // Generate token
     const token = generateToken(user._id);
 
     // Return user data without password
-    const userResponse = user.toObject();
+    const userResponse = { ...user };
     delete userResponse.password;
 
+    console.log(`✅ [AUTH] User signed up: ${email}`);
     res.status(201).json({
       message: 'User registered successfully',
       token,
       user: userResponse,
+      success: true,
     });
   } catch (error) {
-    console.error('Signup error:', error);
-    res.status(500).json({ message: 'Server error during signup', error: error.message });
+    console.error('❌ Signup error:', error.message);
+    res.status(500).json({ 
+      message: 'Server error during signup', 
+      error: error.message,
+      success: false 
+    });
   }
 };
 
@@ -73,13 +82,13 @@ exports.login = async (req, res) => {
     }
 
     // Check if user exists
-    let user = await User.findOne({ email }).select('+password');
+    const user = userService.findUserByEmail(email);
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
     // Check password
-    const isMatch = await user.comparePassword(password);
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
@@ -88,17 +97,23 @@ exports.login = async (req, res) => {
     const token = generateToken(user._id);
 
     // Return user data without password
-    const userResponse = user.toObject();
+    const userResponse = { ...user };
     delete userResponse.password;
 
+    console.log(`✅ [AUTH] User logged in: ${email}`);
     res.status(200).json({
       message: 'Login successful',
       token,
       user: userResponse,
+      success: true,
     });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ message: 'Server error during login', error: error.message });
+    console.error('❌ Login error:', error.message);
+    res.status(500).json({ 
+      message: 'Server error during login', 
+      error: error.message,
+      success: false 
+    });
   }
 };
 
@@ -107,13 +122,15 @@ exports.login = async (req, res) => {
 // @access  Private
 exports.getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.userId);
+    const user = userService.findUserById(req.userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.status(200).json({ user });
+    const userResponse = { ...user };
+    delete userResponse.password;
+    res.status(200).json({ success: true, user: userResponse });
   } catch (error) {
-    console.error('Get profile error:', error);
+    console.error('❌ Get profile error:', error.message);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -125,22 +142,29 @@ exports.updateProfile = async (req, res) => {
   try {
     const { name, age, weight, height, fitnessGoal } = req.body;
     
-    const user = await User.findByIdAndUpdate(
-      req.userId,
-      { name, age, weight, height, fitnessGoal },
-      { new: true, runValidators: true }
-    );
+    const user = userService.updateUser(req.userId, {
+      name,
+      age,
+      weight,
+      height,
+      fitnessGoal,
+    });
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    const userResponse = { ...user };
+    delete userResponse.password;
+
+    console.log(`✅ [AUTH] Profile updated: ${user.email}`);
     res.status(200).json({ 
-      message: 'Profile updated successfully', 
-      user 
+      success: true,
+      message: 'Profile updated successfully',
+      user: userResponse 
     });
   } catch (error) {
-    console.error('Update profile error:', error);
+    console.error('❌ Update profile error:', error.message);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

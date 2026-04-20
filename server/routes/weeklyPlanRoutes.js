@@ -2,10 +2,10 @@
 const express = require('express');
 const router = express.Router();
 const weeklyPlanController = require('../controllers/weeklyPlanController');
-const authMiddleware = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 
 // Apply auth middleware to all routes
-router.use(authMiddleware);
+router.use(protect);
 
 // Get personalized weekly plan
 router.get('/', async (req, res) => {

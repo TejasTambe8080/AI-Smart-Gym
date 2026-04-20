@@ -66,6 +66,17 @@ const userStatsSchema = new mongoose.Schema(
       min: 1,
       max: 7
     },
+    consistencyScore: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100
+    },
+    missedSessions: {
+      type: Number,
+      default: 0
+    },
+
     
     // Gamification
     totalXP: {

@@ -12,10 +12,29 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const statsRoutes = require('./routes/statsRoutes');
 const insightsRoutes = require('./routes/insightsRoutes');
 const weeklyPlanRoutes = require('./routes/weeklyPlanRoutes');
+const progressionRoutes = require('./routes/progressionRoutes');
+const trainerRoutes = require('./routes/trainerRoutes');
 const errorHandler = require('./middleware/errorHandler');
-const logger = require('./middleware/logger');
+const logger = require('./utils/logger');
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
 
 const app = express();
+
+// Security Middleware
+app.use(helmet());
+
+// Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many requests from this IP, please try again after 15 minutes.' }
+});
+
+app.use('/api/', limiter);
+
 
 // Connect to database
 connectDB();
@@ -23,11 +42,38 @@ connectDB();
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+
+// CORS configuration - allow both port 3000 and 3001 for development
+const corsOptions = {
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:3000/',
+      'http://localhost:3001/',
+      process.env.CLIENT_URL
+    ].filter(Boolean);
+    
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS not allowed'));
+    }
+  },
   credentials: true,
-}));
-app.use(logger);
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
+// Log all requests in production
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production') {
+    logger.info(`${req.method} ${req.url} - IP: ${req.ip}`);
+  }
+  next();
+});
+
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -39,6 +85,9 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/insights', insightsRoutes);
 app.use('/api/weekly-plan', weeklyPlanRoutes);
+app.use('/api/progression', progressionRoutes);
+app.use('/api/trainers', trainerRoutes);
+
 
 // Health check route
 app.get('/api/health', (req, res) => {
@@ -61,8 +110,14 @@ app.use((req, res) => {
 // Error handling middleware - MUST be last
 app.use(errorHandler);
 
+const http = require('http');
+const { initSocket } = require('./utils/socket');
+
+const server = http.createServer(app);
+initSocket(server);
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📝 API Documentation: http://localhost:${PORT}/api/health`);
 });

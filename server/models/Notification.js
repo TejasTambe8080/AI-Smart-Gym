@@ -17,8 +17,13 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['workout_reminder', 'posture_alert', 'streak_achievement', 'achievement', 'weak_muscle', 'info'],
+    enum: ['workout_reminder', 'posture_alert', 'streak_achievement', 'achievement', 'weak_muscle', 'info', 'consistency_alert', 'risk_alert'],
     default: 'info'
+  },
+  priority: {
+    type: String,
+    enum: ['HIGH', 'MEDIUM', 'LOW'],
+    default: 'LOW'
   },
   icon: {
     type: String,
@@ -28,6 +33,7 @@ const notificationSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+
   actionUrl: String,
   createdAt: {
     type: Date,

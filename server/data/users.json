@@ -1,0 +1,26 @@
+[
+  {
+    "_id": "user_1776664195795_482yp0cdm",
+    "name": " Test User",
+    "email": "newemail@gmail.com",
+    "password": "$2a$10$.eqOfLsZd/.utsHy.8E3m.zmwd5VJDO6WezBXjbsqoeFtBl1O2q/e",
+    "age": 25,
+    "weight": 68,
+    "height": 180,
+    "fitnessGoal": "muscle_gain",
+    "createdAt": "2026-04-20T05:49:55.796Z",
+    "updatedAt": "2026-04-20T05:49:55.796Z"
+  },
+  {
+    "_id": "user_1776669557461_cfo8vouja",
+    "name": "Tejas SampatTambe",
+    "email": "harshwardhanmali714@gmail.com",
+    "password": "$2a$10$MUDItihbt1GXoph1LW9Wj.lpgXESDN65GdTxfZ282x8EjfFN1qyW6",
+    "age": 21,
+    "weight": 76,
+    "height": 175,
+    "fitnessGoal": "general_fitness",
+    "createdAt": "2026-04-20T07:19:17.461Z",
+    "updatedAt": "2026-04-20T07:19:17.461Z"
+  }
+]

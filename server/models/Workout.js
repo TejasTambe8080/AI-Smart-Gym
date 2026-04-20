@@ -57,9 +57,15 @@ const workoutSchema = new mongoose.Schema(
       depth: { type: Number, default: 0, min: 0, max: 100 },
       speed: { type: Number, default: 0, min: 0, max: 100 },
     },
+    requestId: {
+      type: String,
+      unique: true,
+      sparse: true, // Only if provided
+    },
   },
   { timestamps: true }
 );
+
 
 // Index for filtering workouts by user and date
 workoutSchema.index({ userId: 1, date: -1 });

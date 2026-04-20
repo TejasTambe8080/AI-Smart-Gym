@@ -1,6 +1,7 @@
 // Notification System - Frontend Component
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import socket from '../utils/socket';
 
 const NotificationDropdown = () => {
   const [notifications, setNotifications] = useState([]);
@@ -10,9 +11,17 @@ const NotificationDropdown = () => {
 
   useEffect(() => {
     fetchNotifications();
-    // Poll for new notifications every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
+
+    // Listen for new notifications in real-time
+    socket.on('notification_received', (newNotification) => {
+      console.log('🔔 New notification received:', newNotification);
+      setNotifications(prev => [newNotification, ...prev]);
+      setUnreadCount(prev => prev + 1);
+    });
+
+    return () => {
+      socket.off('notification_received');
+    };
   }, []);
 
   const fetchNotifications = async () => {
@@ -77,22 +86,23 @@ const NotificationDropdown = () => {
     }
   };
 
-  const getNotificationColor = (type) => {
-    switch (type) {
-      case 'achievement':
-        return 'bg-green-500/20 border-green-500/30';
-      case 'posture_alert':
-        return 'bg-yellow-500/20 border-yellow-500/30';
-      case 'workout_reminder':
-        return 'bg-blue-500/20 border-blue-500/30';
-      case 'streak_achievement':
-        return 'bg-orange-500/20 border-orange-500/30';
-      case 'weak_muscle':
-        return 'bg-red-500/20 border-red-500/30';
-      default:
-        return 'bg-slate-500/20 border-slate-500/30';
+  const getNotificationColor = (notification) => {
+    if (notification.priority === 'HIGH') return 'bg-rose-500/20 border-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.2)]';
+    if (notification.priority === 'MEDIUM') return 'bg-amber-500/20 border-amber-500';
+    if (notification.priority === 'LOW') return 'bg-blue-500/20 border-blue-500';
+    
+    switch (notification.type) {
+      case 'achievement': return 'bg-green-500/20 border-green-500/30';
+      case 'posture_alert': return 'bg-yellow-500/20 border-yellow-500/30';
+      default: return 'bg-slate-500/20 border-slate-500/30';
     }
   };
+
+  const sortedNotifications = [...notifications].sort((a, b) => {
+    const priorityMap = { HIGH: 3, MEDIUM: 2, LOW: 1 };
+    return (priorityMap[b.priority] || 0) - (priorityMap[a.priority] || 0);
+  });
+
 
   return (
     <div className="relative">
@@ -149,13 +159,14 @@ const NotificationDropdown = () => {
                 </div>
               ) : (
                 <div className="divide-y divide-slate-700">
-                  {notifications.map((notification) => (
+                   {sortedNotifications.map((notification) => (
                     <div
                       key={notification._id}
-                      className={`p-4 border-l-4 ${getNotificationColor(notification.type)} ${
+                      className={`p-4 border-l-4 ${getNotificationColor(notification)} ${
                         !notification.isRead ? 'bg-slate-700/50' : ''
                       } hover:bg-slate-700 transition cursor-pointer`}
                     >
+
                       <div className="flex gap-3 justify-between items-start">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">

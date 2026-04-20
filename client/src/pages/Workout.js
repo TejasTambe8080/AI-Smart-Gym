@@ -1,10 +1,11 @@
-// Main Workout Page - FULLY FIXED & MOBILE RESPONSIVE
+// Main Workout Page - Premium High-Fidelity Performance Module
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MediaPipePose from '../components/MediaPipePose';
-import { PostureDetector, RepCounter, PerformanceScorer, VoiceFeedback } from '../utils/ai';
+import { PostureDetector, RepCounter, PerformanceScorer } from '../utils/ai';
 import { useVoiceFeedback } from '../hooks/useVoiceFeedback';
 import { workoutService } from '../services/api';
+import { toast } from 'react-hot-toast';
 
 const Workout = () => {
   const navigate = useNavigate();
@@ -24,721 +25,278 @@ const Workout = () => {
 
   // Hooks
   const voiceFeedbackHook = useVoiceFeedback();
-
-  const countdownIntervalRef = useRef(null);
   const workoutIntervalRef = useRef(null);
-
-  // Update voice setting in localStorage
-  useEffect(() => {
-    localStorage.setItem('voiceFeedback', voiceEnabled ? 'true' : 'false');
-  }, [voiceEnabled]);
 
   // Track elapsed time
   useEffect(() => {
     if (!isWorkoutActive || !startTime) return;
-
     const interval = setInterval(() => {
-      const now = new Date();
-      const elapsed = Math.floor((now - startTime) / 1000);
-      setElapsedTime(elapsed);
-    }, 100);
-
+      setElapsedTime(Math.floor((new Date() - startTime) / 1000));
+    }, 500);
     workoutIntervalRef.current = interval;
     return () => clearInterval(interval);
   }, [isWorkoutActive, startTime]);
 
-  // Countdown before workout starts
+  // Start sequence
   const startWorkoutCountdown = () => {
-    console.log('⏰ Starting 3-second countdown...');
     setShowWorkoutSetup(false);
     let countdown = 3;
     setCountdownValue(countdown);
 
-    const countdownInterval = setInterval(() => {
+    const interval = setInterval(() => {
       countdown--;
       setCountdownValue(countdown);
-
-      if (voiceEnabled && countdown > 0) {
-        voiceFeedbackHook.speak(countdown.toString(), { rate: 1.0, pitch: 1.2 });
-      }
-
+      if (voiceEnabled && countdown > 0) voiceFeedbackHook.speak(countdown.toString());
       if (countdown <= 0) {
-        clearInterval(countdownInterval);
-        startWorkout();
+        clearInterval(interval);
+        initiateWorkout();
       }
     }, 1000);
-
-    countdownIntervalRef.current = countdownInterval;
   };
 
-  // Start the actual workout
-  const startWorkout = () => {
-    console.log('🚀 Workout started!');
+  const initiateWorkout = () => {
     const counter = new RepCounter(exerciseType);
     setRepCounter(counter);
     setIsWorkoutActive(true);
     setStartTime(new Date());
     setElapsedTime(0);
     setCountdownValue(null);
-
-    if (voiceEnabled) {
-      voiceFeedbackHook.speak(
-        `Starting ${exerciseType.replace('_', ' ')} workout. Good luck!`,
-        { rate: 0.9, pitch: 1.0 }
-      );
-    }
+    if (voiceEnabled) voiceFeedbackHook.speak(`Initializing ${exerciseType.replace('_', ' ')} protocol. Let's begin.`);
   };
 
-  // Handle pose detection - CRITICAL INTEGRATION
   const handlePoseDetected = (results) => {
     if (!isWorkoutActive || !repCounter) return;
-
     const landmarks = results.poseLandmarks;
-    if (!landmarks || landmarks.length === 0) {
-      console.warn('⚠️ No landmarks detected');
-      return;
+    if (!landmarks) return;
+
+    const score = PostureDetector.calculatePostureScore(landmarks);
+    setPostureScore(score);
+    repCounter.addPostureScore(score);
+
+    const feedback = PostureDetector.getPostureFeedback(landmarks);
+    setPostureFeedback(feedback);
+
+    if (score < 60 && voiceEnabled && feedback.length > 0) {
+      voiceFeedbackHook.speakPostureCorrection(feedback);
     }
 
-    // Calculate posture score
-    try {
-      const score = PostureDetector.calculatePostureScore(landmarks);
-      setPostureScore(score);
-      repCounter.addPostureScore(score);
-
-      // Get posture feedback
-      const feedback = PostureDetector.getPostureFeedback(landmarks);
-      setPostureFeedback(feedback);
-
-      // Provide voice feedback for poor posture
-      if (score < 60 && voiceEnabled && feedback.length > 0) {
-        voiceFeedbackHook.speakPostureCorrection(feedback);
-      }
-
-      // Detect reps
-      const repDetected = repCounter.detect(landmarks);
-      if (repDetected) {
-        const currentReps = repCounter.getRepCount();
-        console.log('✅ Rep detected! Total:', currentReps);
-
-        if (voiceEnabled) {
-          voiceFeedbackHook.speakRepCount(currentReps, 10);
-        }
-
-        // Celebration every 5 reps
-        if (currentReps % 5 === 0) {
-          voiceFeedbackHook.speakMotivation();
-        }
-      }
-    } catch (error) {
-      console.error('Error processing pose:', error);
+    if (repCounter.detect(landmarks)) {
+      const count = repCounter.getRepCount();
+      if (voiceEnabled) voiceFeedbackHook.speakRepCount(count, 10);
+      if (count % 5 === 0) voiceFeedbackHook.speakMotivation();
     }
   };
 
-  // End workout and process results
   const endWorkout = async () => {
-    console.log('🏁 Ending workout...');
     setIsWorkoutActive(false);
     clearInterval(workoutIntervalRef.current);
-    clearInterval(countdownIntervalRef.current);
 
-    if (!repCounter) {
-      console.error('Rep counter not initialized');
-      return;
-    }
+    const finalReps = repCounter?.getRepCount() || 0;
+    const avgPosture = repCounter?.getAveragePostureScore() || 0;
 
-    const finalRepCount = repCounter.getRepCount();
-    const avgPostureScore = repCounter.getAveragePostureScore();
-
-    console.log(`📊 Final Stats: ${finalRepCount} reps, ${avgPostureScore}% posture`);
-
-    const performanceData = {
-      postureScore: avgPostureScore,
-      reps: finalRepCount,
-      targetReps: 10,
-      consistency: 0.85,
-    };
-
-    const performanceScore = PerformanceScorer.calculatePerformanceScore(performanceData);
-    const suggestions = PerformanceScorer.generateSuggestions({
-      ...performanceData,
-      performanceScore,
+    const performanceScore = PerformanceScorer.calculatePerformanceScore({ 
+       postureScore: avgPosture, reps: finalReps, targetReps: 10, consistency: 0.85 
+    });
+    
+    const calories = PerformanceScorer.estimateCaloriesBurned(exerciseType, elapsedTime / 60, performanceScore);
+    const suggestions = PerformanceScorer.generateSuggestions({ 
+       postureScore: avgPosture, reps: finalReps, performanceScore 
     });
 
-    const caloriesBurned = PerformanceScorer.estimateCaloriesBurned(
-      exerciseType,
-      elapsedTime / 60,
-      performanceScore
-    );
+    const workoutData = { exerciseType, reps: finalReps, duration: elapsedTime, postureScore: avgPosture, caloriesBurned: calories };
 
-    const workoutData = {
-      exerciseType,
-      reps: finalRepCount,
-      sets: 1,
-      duration: elapsedTime,
-      postureScore: avgPostureScore,
-      caloriesBurned,
-      notes: `Performance Score: ${performanceScore}%`,
-      postureDetails: {
-        backBent: 0,
-        kneesMisaligned: 0,
-        shouldersMisaligned: 0,
-      },
-      performanceMetrics: {
-        consistency: 85,
-        depth: performanceScore,
-        speed: 80,
-      },
-    };
+    setSessionData({ workout: workoutData, performanceScore, suggestions });
+    if (voiceEnabled) voiceFeedbackHook.speak(`Protocol complete. Final score: ${performanceScore} percent.`);
 
-    setSessionData({
-      workout: workoutData,
-      performanceScore,
-      suggestions,
-    });
-
-    // End workout feedback
-    if (voiceEnabled) {
-      voiceFeedbackHook.speak(
-        `Workout complete! You did ${finalRepCount} reps with ${performanceScore}% performance score.`,
-        { rate: 0.9, pitch: 1.0 }
-      );
-    }
-
-    // Save to backend
     try {
       await workoutService.createWorkout(workoutData);
-      console.log('✅ Workout saved to backend');
+      toast.success('Performance data synchronized.');
     } catch (error) {
-      console.error('Error saving workout:', error);
+      toast.error('Sync failure.');
     }
   };
 
-  // Format time: MM:SS
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+  const formatTime = (s) => `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
 
-  // ============================================
-  // RENDER: Workout Setup Screen
-  // ============================================
+  // SETUP SCREEN
   if (showWorkoutSetup) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-500 via-blue-600 to-purple-700 flex items-center justify-center p-3 sm:p-6">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-8">
-          <div className="text-center mb-8">
-            <div className="text-5xl mb-4">🏋️</div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Select Exercise</h1>
-            <p className="text-gray-600 text-sm mt-2">Choose your workout and get started</p>
-          </div>
-
-          <div className="space-y-4 sm:space-y-6 mb-6 sm:mb-8">
-            {/* Exercise Type Selection */}
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-700">
-                Choose Exercise Type
-              </label>
-              <select
-                value={exerciseType}
-                onChange={(e) => setExerciseType(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
-              >
-                <option value="squat">🦵 Squat</option>
-                <option value="push_up">💪 Push-Up</option>
-                <option value="pull_up">🔝 Pull-Up</option>
-                <option value="sit_up">⬆️ Sit-Up</option>
-                <option value="burpee">🔄 Burpee</option>
-              </select>
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 relative overflow-hidden animate-enter">
+         <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-purple-600/5"></div>
+         <div className="glass-card p-12 rounded-[3.5rem] w-full max-w-lg border-slate-800/80 relative z-10 text-center space-y-10">
+            <div className="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center text-4xl mx-auto shadow-2xl shadow-blue-500/20">🏋️</div>
+            <div className="space-y-2">
+               <h1 className="text-3xl font-black text-white tracking-tighter uppercase italic">Select Protocol</h1>
+               <p className="text-slate-500 font-medium">Choose your focus group for real-time analysis.</p>
             </div>
-
-            {/* Voice Feedback Toggle */}
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={voiceEnabled}
-                  onChange={(e) => setVoiceEnabled(e.target.checked)}
-                  className="w-5 h-5 accent-blue-600"
-                />
-                <div>
-                  <p className="font-semibold text-gray-900">Enable Voice Feedback</p>
-                  <p className="text-xs text-gray-600">Get real-time audio coaching during workout</p>
-                </div>
-              </label>
+            <div className="space-y-6 text-left">
+               <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-slate-600 tracking-widest ml-1">Target Exercise</label>
+                  <select
+                    value={exerciseType}
+                    onChange={(e) => setExerciseType(e.target.value)}
+                    className="input-field appearance-none"
+                  >
+                    <option value="squat">🦵 Posterior Chain (Squat)</option>
+                    <option value="push_up">💪 Pushing Power (Push-Up)</option>
+                    <option value="pull_up">🔝 Vertical Pull (Pull-Up)</option>
+                    <option value="sit_up">⬇️ Core Stability (Sit-Up)</option>
+                  </select>
+               </div>
+               <div className="flex items-center justify-between p-5 bg-slate-900 rounded-2xl border border-slate-800">
+                  <span className="text-xs font-bold text-slate-300">Neural Voice Feedback</span>
+                  <button onClick={() => setVoiceEnabled(!voiceEnabled)} className={`w-14 h-7 rounded-full p-1 transition-colors ${voiceEnabled ? 'bg-blue-600' : 'bg-slate-700'}`}>
+                     <div className={`w-5 h-5 bg-white rounded-full transition-transform ${voiceEnabled ? 'translate-x-7' : ''}`}></div>
+                  </button>
+               </div>
             </div>
-          </div>
-
-          {/* Start Button */}
-          <button
-            onClick={startWorkoutCountdown}
-            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 sm:py-4 rounded-lg transition-all duration-200 mb-3 text-base sm:text-lg"
-          >
-            ▶️ Start Workout
-          </button>
-
-          {/* Back Button */}
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="w-full bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold py-2 sm:py-3 rounded-lg transition-colors duration-200"
-          >
-            ← Back to Dashboard
-          </button>
-        </div>
+            <div className="space-y-3 pt-4">
+               <button onClick={startWorkoutCountdown} className="btn-primary w-full h-16 text-lg">Initialize Feedback Stream</button>
+               <button onClick={() => navigate('/dashboard')} className="btn-secondary w-full">Return to Dashboard</button>
+            </div>
+         </div>
       </div>
     );
   }
 
-  // ============================================
-  // RENDER: Countdown Screen
-  // ============================================
+  // COUNTDOWN
   if (countdownValue !== null) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center p-4">
-        <div className="text-center">
-          <p className="text-white text-xl mb-8">Get Ready!</p>
-          <div className="w-40 h-40 sm:w-56 sm:h-56 rounded-full border-4 border-blue-500 flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-600">
-            <p className="text-7xl sm:text-9xl font-bold text-white">{countdownValue}</p>
-          </div>
-        </div>
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 animate-enter">
+         <p className="text-blue-500 font-black uppercase tracking-[0.5em] mb-12">Synchronizing Biometrics</p>
+         <div className="w-64 h-64 rounded-full border-2 border-white/5 flex items-center justify-center relative">
+            <div className="absolute inset-4 rounded-full border border-blue-500/20 animate-ping"></div>
+            <span className="text-9xl font-black text-white italic">{countdownValue}</span>
+         </div>
       </div>
     );
   }
 
-  // ============================================
-  // RENDER: Workout Complete Screen
-  // ============================================
+  // SUMMARY SCREEN
   if (sessionData) {
     const { workout, performanceScore, suggestions } = sessionData;
-
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-3 sm:p-6">
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="text-6xl mb-4">🎉</div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-green-600">Workout Complete!</h1>
-          </div>
-
-          {/* Stats Grid - Fully Responsive */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-            <div className="bg-blue-50 p-4 sm:p-6 rounded-lg border border-blue-200">
-              <p className="text-gray-600 text-xs sm:text-sm mb-2 font-semibold">REPS</p>
-              <p className="text-2xl sm:text-4xl font-bold text-blue-600">{workout.reps}</p>
+      <div className="min-h-screen bg-slate-900/50 p-6 lg:p-8 animate-enter">
+         <div className="max-w-5xl mx-auto space-y-10">
+            <div className="text-center space-y-2">
+               <div className="text-6xl mb-6">🏆</div>
+               <h1 className="text-5xl font-black text-white tracking-widest uppercase italic">Session Decoded</h1>
+               <p className="text-slate-400 font-medium">Performance data categorized and stored in neural cloud.</p>
             </div>
 
-            <div className="bg-green-50 p-4 sm:p-6 rounded-lg border border-green-200">
-              <p className="text-gray-600 text-xs sm:text-sm mb-2 font-semibold">DURATION</p>
-              <p className="text-2xl sm:text-4xl font-bold text-green-600">{formatTime(workout.duration)}</p>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+               {[
+                 { l: 'Reps Detected', v: workout.reps, c: 'blue' },
+                 { l: 'Time Under Tension', v: formatTime(workout.duration), c: 'emerald' },
+                 { l: 'Avg Precision', v: `${workout.postureScore}%`, c: 'amber' },
+                 { l: 'Neural Index', v: `${performanceScore}%`, c: 'rose' }
+               ].map((s, i) => (
+                 <div key={i} className="premium-card p-6 border-slate-800 text-center space-y-1">
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{s.l}</p>
+                    <p className={`text-3xl font-black text-${s.c}-500 italic`}>{s.v}</p>
+                 </div>
+               ))}
             </div>
 
-            <div className="bg-orange-50 p-4 sm:p-6 rounded-lg border border-orange-200">
-              <p className="text-gray-600 text-xs sm:text-sm mb-2 font-semibold">POSTURE</p>
-              <p className="text-2xl sm:text-4xl font-bold text-orange-600">{workout.postureScore}%</p>
+            <div className="glass-card p-10 rounded-[3rem] bg-gradient-to-r from-blue-600/10 to-purple-600/10 text-center">
+               <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Metabolic Burn Factor</p>
+               <p className="text-6xl font-black text-white italic">🔥 {workout.caloriesBurned} <span className="text-2xl text-slate-500">KCALS</span></p>
             </div>
 
-            <div className="bg-red-50 p-4 sm:p-6 rounded-lg border border-red-200">
-              <p className="text-gray-600 text-xs sm:text-sm mb-2 font-semibold">PERFORMANCE</p>
-              <p className="text-2xl sm:text-4xl font-bold text-red-600">{performanceScore}%</p>
-            </div>
-          </div>
-
-          {/* Calories Burned */}
-          <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-6 sm:p-8 rounded-lg text-white mb-6 sm:mb-8 text-center">
-            <p className="text-gray-100 text-sm font-semibold mb-2">CALORIES BURNED</p>
-            <p className="text-4xl sm:text-5xl font-bold">🔥 {workout.caloriesBurned} kcal</p>
-          </div>
-
-          {/* AI Suggestions */}
-          <div className="mb-6 sm:mb-8">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-900">AI Suggestions</h2>
-            <div className="space-y-3 sm:space-y-4">
-              {suggestions && suggestions.map((suggestion, idx) => (
-                <div
-                  key={idx}
-                  className={`p-4 sm:p-5 rounded-lg border-l-4 ${
-                    suggestion.priority === 'high'
-                      ? 'bg-red-50 border-red-500'
-                      : suggestion.priority === 'medium'
-                      ? 'bg-yellow-50 border-yellow-500'
-                      : 'bg-green-50 border-green-500'
-                  }`}
-                >
-                  <p className="font-semibold text-gray-900 text-sm sm:text-base">{suggestion.message}</p>
-                  <p className="text-gray-600 text-xs sm:text-sm mt-1">💡 {suggestion.tip}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 sm:py-4 rounded-lg transition-colors duration-200 text-base sm:text-lg"
-            >
-              📊 View Dashboard
-            </button>
-            <button
-              onClick={() => {
-                setShowWorkoutSetup(true);
-                setSessionData(null);
-                setRepCounter(null);
-                setElapsedTime(0);
-              }}
-              className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 sm:py-4 rounded-lg transition-colors duration-200 text-base sm:text-lg"
-            >
-              🔄 Another Workout
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ============================================
-  // RENDER: Active Workout Screen - FULLY RESPONSIVE
-  // ============================================
-  return (
-    <div className="min-h-screen bg-gray-900 text-white p-3 sm:p-4 lg:p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header - Mobile optimized */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-4 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold">
-            💪 {exerciseType.toUpperCase().replace('_', ' ')}
-          </h1>
-          <button
-            onClick={endWorkout}
-            className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
-          >
-            End Workout
-          </button>
-        </div>
-
-        {/* Main Workout Area - Responsive Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-          {/* Video/Pose Detection - Responsive height */}
-          <div className="lg:col-span-2">
-            <div className="bg-black rounded-lg overflow-hidden aspect-video lg:aspect-auto lg:h-[600px]">
-              <MediaPipePose onPoseDetected={handlePoseDetected} isRunning={isWorkoutActive} />
-            </div>
-          </div>
-
-          {/* Stats Panel - Responsive Stack */}
-          <div className="grid grid-cols-2 lg:grid-cols-1 gap-3 sm:gap-4 lg:space-y-4">
-            {/* Timer */}
-            <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-4 sm:p-6 rounded-lg text-center col-span-2 lg:col-span-1">
-              <p className="text-blue-100 text-xs sm:text-sm font-semibold mb-1 sm:mb-2">ELAPSED TIME</p>
-              <p className="text-3xl sm:text-5xl font-bold text-blue-300">{formatTime(elapsedTime)}</p>
-            </div>
-
-            {/* Reps Counter */}
-            <div className="bg-gradient-to-br from-green-600 to-green-700 p-4 sm:p-6 rounded-lg text-center">
-              <p className="text-green-100 text-xs sm:text-sm font-semibold mb-1 sm:mb-2">REPS</p>
-              <p className="text-3xl sm:text-5xl font-bold text-green-300">{repCounter?.getRepCount() || 0}</p>
-            </div>
-
-            {/* Posture Score */}
-            <div
-              className={`p-4 sm:p-6 rounded-lg text-center ${
-                postureScore >= 80
-                  ? 'bg-gradient-to-br from-green-600 to-green-700'
-                  : postureScore >= 60
-                  ? 'bg-gradient-to-br from-yellow-600 to-yellow-700'
-                  : 'bg-gradient-to-br from-red-600 to-red-700'
-              }`}
-            >
-              <p className="text-gray-100 text-xs sm:text-sm font-semibold mb-1 sm:mb-2">POSTURE SCORE</p>
-              <p className="text-3xl sm:text-5xl font-bold">{postureScore}%</p>
-            </div>
-
-            {/* Voice Toggle Button */}
-            <button
-              onClick={() => setVoiceEnabled(!voiceEnabled)}
-              className={`col-span-2 lg:col-span-1 py-3 sm:py-4 rounded-lg font-bold transition-all duration-200 text-sm sm:text-base ${
-                voiceEnabled
-                  ? 'bg-blue-600 hover:bg-blue-700'
-                  : 'bg-gray-700 hover:bg-gray-600'
-              }`}
-            >
-              {voiceEnabled ? '🔊 Voice ON' : '🔇 Voice OFF'}
-            </button>
-
-            {/* Posture Feedback - Mobile optimized */}
-            {postureFeedback.length > 0 && (
-              <div className="col-span-2 lg:col-span-1 bg-orange-900 border border-orange-500 p-3 sm:p-4 rounded-lg">
-                <p className="text-xs sm:text-sm font-semibold text-orange-200 mb-2">📝 Form Tips:</p>
-                <div className="space-y-1 max-h-32 overflow-y-auto">
-                  {postureFeedback.map((feedback, idx) => (
-                    <p key={idx} className="text-xs text-orange-100">
-                      • {feedback}
-                    </p>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default Workout;
-      },
-      performanceMetrics: {
-        consistency: 85,
-        depth: performanceScore,
-        speed: 80,
-      },
-    };
-
-    setSessionData({
-      workout: workoutData,
-      performanceScore,
-      suggestions,
-    });
-
-    // Provide end feedback
-    voiceFeedback?.feedbackEnd(finalRepCount, performanceScore);
-
-    // Save to backend
-    try {
-      await workoutService.createWorkout(workoutData);
-    } catch (error) {
-      console.error('Error saving workout:', error);
-    }
-  };
-
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  if (showWorkoutSetup) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center p-6">
-        <div className="card w-full max-w-md">
-          <h1 className="text-3xl font-bold mb-8 text-center text-gray-900">
-            Select Exercise
-          </h1>
-
-          <div className="space-y-4 mb-8">
-            <div>
-              <label className="block text-sm font-semibold mb-3 text-gray-700">
-                Choose Exercise Type
-              </label>
-              <select
-                value={exerciseType}
-                onChange={(e) => setExerciseType(e.target.value)}
-                className="input-field"
-              >
-                <option value="squat">Squat</option>
-                <option value="push_up">Push-Up</option>
-                <option value="pull_up">Pull-Up</option>
-                <option value="sit_up">Sit-Up</option>
-                <option value="burpee">Burpee</option>
-              </select>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                id="voice"
-                checked={voiceEnabled}
-                onChange={(e) => setVoiceEnabled(e.target.checked)}
-                className="w-5 h-5"
-              />
-              <label htmlFor="voice" className="text-gray-700 font-semibold">
-                Enable Voice Feedback 🔊
-              </label>
-            </div>
-          </div>
-
-          <button
-            onClick={startWorkoutCountdown}
-            className="btn-primary w-full mb-4"
-          >
-            Start Workout
-          </button>
-
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="btn-secondary w-full"
-          >
-            Back to Dashboard
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (sessionData) {
-    const { workout, performanceScore, suggestions } = sessionData;
-
-    return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="card mb-8">
-            <h1 className="text-4xl font-bold mb-8 text-center text-green-600">
-              🎉 Workout Complete!
-            </h1>
-
-            {/* Summary */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-gray-600 text-sm mb-2">Reps</p>
-                <p className="text-3xl font-bold text-blue-600">{workout.reps}</p>
-              </div>
-              <div className="bg-green-50 p-4 rounded-lg">
-                <p className="text-gray-600 text-sm mb-2">Duration</p>
-                <p className="text-3xl font-bold text-green-600">{formatTime(workout.duration)}</p>
-              </div>
-              <div className="bg-orange-50 p-4 rounded-lg">
-                <p className="text-gray-600 text-sm mb-2">Posture</p>
-                <p className="text-3xl font-bold text-orange-600">{workout.postureScore}%</p>
-              </div>
-              <div className="bg-red-50 p-4 rounded-lg">
-                <p className="text-gray-600 text-sm mb-2">Performance</p>
-                <p className="text-3xl font-bold text-red-600">{performanceScore}%</p>
-              </div>
-            </div>
-
-            {/* Calories */}
-            <div className="bg-purple-50 p-6 rounded-lg mb-8">
-              <p className="text-gray-600 text-lg mb-2">Calories Burned</p>
-              <p className="text-4xl font-bold text-purple-600">🔥 {workout.caloriesBurned} kcal</p>
-            </div>
-
-            {/* Suggestions */}
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold mb-4 text-gray-900">AI Suggestions</h2>
-              <div className="space-y-3">
-                {suggestions.map((suggestion, idx) => (
-                  <div
-                    key={idx}
-                    className={`p-4 rounded-lg border-l-4 ${
-                      suggestion.priority === 'high'
-                        ? 'bg-red-50 border-red-500'
-                        : suggestion.priority === 'medium'
-                        ? 'bg-yellow-50 border-yellow-500'
-                        : 'bg-green-50 border-green-500'
-                    }`}
-                  >
-                    <p className="font-semibold text-gray-900">{suggestion.message}</p>
-                    <p className="text-gray-600 text-sm mt-1">💡 {suggestion.tip}</p>
+            <div className="grid lg:grid-cols-2 gap-10">
+               <div className="space-y-6">
+                  <h3 className="text-xl font-black text-white italic uppercase flex items-center gap-3">
+                     <span className="w-1.5 h-6 bg-blue-500 rounded-full"></span>
+                     Strategic Recalibration
+                  </h3>
+                  <div className="space-y-4">
+                     {suggestions.map((s, i) => (
+                       <div key={i} className={`p-6 rounded-3xl border-l-[6px] ${s.priority === 'high' ? 'bg-rose-500/5 border-rose-500' : 'bg-slate-800/40 border-slate-700'}`}>
+                          <p className="text-white font-black text-lg mb-2">{s.message}</p>
+                          <p className="text-slate-500 text-sm font-medium italic">🧠 {s.tip}</p>
+                       </div>
+                     ))}
                   </div>
-                ))}
-              </div>
+               </div>
+               <div className="flex flex-col gap-4 justify-center">
+                  <button onClick={() => navigate('/dashboard')} className="btn-primary h-20 text-xl shadow-2xl">Return to Terminal</button>
+                  <button onClick={() => { setShowWorkoutSetup(true); setSessionData(null); }} className="btn-secondary h-20 text-xl">Initialize New Loop</button>
+               </div>
             </div>
-
-            {/* Actions */}
-            <div className="flex gap-4">
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="btn-primary flex-1"
-              >
-                View Dashboard
-              </button>
-              <button
-                onClick={() => {
-                  setShowWorkoutSetup(true);
-                  setSessionData(null);
-                  setRepCounter(null);
-                }}
-                className="btn-success flex-1"
-              >
-                Start Another Workout
-              </button>
-            </div>
-          </div>
-        </div>
+         </div>
       </div>
     );
   }
 
+  // ACTIVE WORKOUT
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">
-            💪 {exerciseType.toUpperCase().replace('_', ' ')}
-          </h1>
-          <button
-            onClick={() => {
-              endWorkout();
-            }}
-            className="btn-danger"
-          >
-            End Workout
-          </button>
-        </div>
+    <div className="min-h-screen bg-slate-950 p-4 lg:p-8 flex flex-col gap-6 animate-enter">
+       <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-4">
+             <span className="text-3xl animate-pulse">💪</span>
+             <div>
+                <h2 className="text-xl font-black text-white uppercase tracking-tighter italic">{exerciseType.replace('_', ' ')} ACTIVE</h2>
+                <div className="flex items-center gap-2">
+                   <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-ping"></div>
+                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Inference Feed Live</span>
+                </div>
+             </div>
+          </div>
+          <button onClick={endWorkout} className="h-14 px-10 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-xl shadow-rose-500/20 active:scale-95">TERMINATE LOOP</button>
+       </div>
 
-        {/* Main workout area */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Video/Pose Detection - Large area */}
-          <div className="lg:col-span-2">
-            <div className="bg-black rounded-lg overflow-hidden h-96 lg:h-full min-h-96">
-              <MediaPipePose onPoseDetected={handlePoseDetected} isRunning={isWorkoutActive} />
-            </div>
+       <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3 h-full relative rounded-[3rem] overflow-hidden border-4 border-slate-900 bg-black shadow-2xl">
+             <MediaPipePose onPoseDetected={handlePoseDetected} isRunning={isWorkoutActive} />
+             
+             {/* Dynamic Floating HUD */}
+             <div className="absolute top-8 left-8 flex flex-col gap-3 pointer-events-none">
+                <div className="glass-card !bg-black/20 p-4 rounded-2xl border-white/5 backdrop-blur-md">
+                   <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Protocol Clock</p>
+                   <p className="text-3xl font-black text-blue-400 italic font-mono">{formatTime(elapsedTime)}</p>
+                </div>
+                {postureFeedback.length > 0 && (
+                  <div className="glass-card !bg-rose-500/20 p-4 rounded-2xl border-rose-500/30 backdrop-blur-md animate-pulse">
+                     <p className="text-[10px] font-black text-rose-200 uppercase tracking-widest mb-2">Form Alert</p>
+                     <p className="text-xs font-bold text-white uppercase">{postureFeedback[0]}</p>
+                  </div>
+                )}
+             </div>
+
+             <div className="absolute bottom-8 right-8 pointer-events-none">
+                <div className="glass-card !bg-black/20 p-6 rounded-[2.5rem] border-white/5 backdrop-blur-xl flex items-center gap-8">
+                   <div className="text-center">
+                      <p className="text-[10px] font-black text-white/30 uppercase mb-1">Reps</p>
+                      <p className="text-6xl font-black text-white italic">{repCounter?.getRepCount() || 0}</p>
+                   </div>
+                   <div className="w-[1px] h-12 bg-white/10"></div>
+                   <div className="text-center">
+                      <p className="text-[10px] font-black text-white/30 uppercase mb-1">Precision</p>
+                      <p className={`text-6xl font-black italic ${postureScore > 80 ? 'text-emerald-400' : 'text-rose-400'}`}>{postureScore}%</p>
+                   </div>
+                </div>
+             </div>
           </div>
 
-          {/* Stats Panel */}
           <div className="space-y-4">
-            {/* Timer */}
-            <div className="card bg-gray-800 text-center">
-              <p className="text-gray-300 text-sm mb-2">ELAPSED TIME</p>
-              <p className="text-5xl font-bold text-blue-400">{formatTime(elapsedTime)}</p>
-            </div>
-
-            {/* Reps Counter */}
-            <div className="card bg-gray-800 text-center">
-              <p className="text-gray-300 text-sm mb-2">REPS</p>
-              <p className="text-5xl font-bold text-green-400">{repCounter?.getRepCount() || 0}</p>
-            </div>
-
-            {/* Posture Score */}
-            <div className="card bg-gray-800 text-center">
-              <p className="text-gray-300 text-sm mb-2">POSTURE SCORE</p>
-              <p className={`text-5xl font-bold ${
-                postureScore >= 80 
-                  ? 'text-green-400' 
-                  : postureScore >= 60 
-                  ? 'text-yellow-400' 
-                  : 'text-red-400'
-              }`}>
-                {postureScore}%
-              </p>
-            </div>
-
-            {/* Voice Toggle */}
-            <button
-              onClick={() => setVoiceEnabled(!voiceEnabled)}
-              className={`w-full py-3 rounded-lg font-semibold transition ${
-                voiceEnabled
-                  ? 'bg-blue-600 hover:bg-blue-700'
-                  : 'bg-gray-700 hover:bg-gray-600'
-              }`}
-            >
-              {voiceEnabled ? '🔊 Voice ON' : '🔇 Voice OFF'}
-            </button>
-
-            {/* Posture Feedback */}
-            {postureFeedback.length > 0 && (
-              <div className="card bg-orange-900 border border-orange-500">
-                <p className="text-sm font-semibold text-orange-100 mb-2">Form Tips:</p>
-                {postureFeedback.map((feedback, idx) => (
-                  <p key={idx} className="text-xs text-orange-50 mb-1">
-                    • {feedback}
-                  </p>
-                ))}
-              </div>
-            )}
+             <div className="premium-card p-6 h-full flex flex-col">
+                <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-6">Bio-Feedback Logs</h3>
+                <div className="flex-1 overflow-y-auto space-y-3 font-mono">
+                   {postureFeedback.map((f, i) => (
+                     <div key={i} className="text-[10px] text-rose-400 font-bold uppercase py-2 border-b border-white/5">
+                        [!] Deviation: {f}
+                     </div>
+                   ))}
+                   <div className="text-[10px] text-emerald-500 font-bold uppercase py-2">
+                      [+] Feed Synchronized
+                   </div>
+                </div>
+                <button onClick={() => setVoiceEnabled(!voiceEnabled)} className="w-full h-14 bg-slate-900 border border-slate-800 rounded-2xl text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-white transition-colors">
+                   Voice Protocol: {voiceEnabled ? 'ACTIVE' : 'MUTED'}
+                </button>
+             </div>
           </div>
-        </div>
-      </div>
+       </div>
     </div>
   );
 };

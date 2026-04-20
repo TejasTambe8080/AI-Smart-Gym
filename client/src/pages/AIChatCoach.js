@@ -1,12 +1,13 @@
-// Premium AI Coach Chat Page
+// Premium AI Coach Chat Page - Fluid Modern Interface
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 
 const AIChatCoach = () => {
   const [messages, setMessages] = useState([
     {
       id: 1,
-      text: "Hey! I'm your AI Fitness Coach. Ask me anything about workouts, diet, posture, or training. What would you like to know today? 💪",
+      text: "Neural Link Established. I am your AI Biometrics Coach. Data synchronized. How can I optimize your performance today? 💪",
       sender: 'bot',
       timestamp: new Date()
     }
@@ -26,12 +27,12 @@ const AIChatCoach = () => {
 
   const sendMessage = async (e) => {
     e.preventDefault();
-    if (!inputValue.trim()) return;
+    const query = inputValue.trim();
+    if (!query) return;
 
-    // Add user message
     const userMessage = {
-      id: messages.length + 1,
-      text: inputValue,
+      id: Date.now(),
+      text: query,
       sender: 'user',
       timestamp: new Date()
     };
@@ -42,27 +43,26 @@ const AIChatCoach = () => {
 
     try {
       const response = await axios.post('http://localhost:5000/api/ai/coach', {
-        query: inputValue
+        query: query
       });
 
       if (response.data.success) {
-        const botMessage = {
-          id: messages.length + 2,
+        setMessages(prev => [...prev, {
+          id: Date.now() + 1,
           text: response.data.reply,
           sender: 'bot',
           timestamp: new Date()
-        };
-        setMessages(prev => [...prev, botMessage]);
+        }]);
       }
     } catch (error) {
-      console.error('Error getting AI response:', error);
-      const errorMessage = {
-        id: messages.length + 2,
-        text: "Sorry, I'm having trouble responding right now. Please try again.",
+      console.error('AI Comms Failure:', error);
+      toast.error('Neural uplink interrupted.');
+      setMessages(prev => [...prev, {
+        id: Date.now() + 2,
+        text: "Apologies, my neural processing units are currently undergoing maintenance. Please retry in a few moments.",
         sender: 'bot',
         timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      }]);
     } finally {
       setLoading(false);
       inputRef.current?.focus();
@@ -70,76 +70,84 @@ const AIChatCoach = () => {
   };
 
   const suggestedQuestions = [
-    "What should I train today?",
-    "How to improve my posture?",
-    "Best workout for muscle gain?",
-    "How many calories should I eat?",
-    "Tips for consistent training?",
-    "How to recover better?"
+    "Target muscle group for today?",
+    "Recalibrate my posture scores",
+    "Hypertrophy diet variables",
+    "Optimizing sleep cycles",
+    "Injury risk mitigation",
+    "Volume progression logic"
   ];
 
-  const handleSuggestedQuestion = (question) => {
-    setInputValue(question);
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-6">
-      <div className="max-w-4xl mx-auto h-screen flex flex-col">
-        {/* Header */}
-        <div className="mb-6 text-center">
-          <h1 className="text-4xl font-bold text-white mb-2 flex items-center justify-center gap-3">
-            🤖 AI Fitness Coach
-          </h1>
-          <p className="text-gray-400">Personalized training and nutrition advice powered by AI</p>
+    <div className="min-h-screen bg-slate-900/50 p-4 lg:p-8 flex flex-col items-center animate-enter">
+      <div className="w-full max-w-4xl h-[calc(100vh-140px)] flex flex-col gap-6">
+        {/* Cinematic Header */}
+        <div className="flex items-center justify-between px-4">
+           <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-2xl shadow-xl shadow-blue-500/20">🤖</div>
+              <div>
+                 <h1 className="text-xl font-black text-white tracking-tight">NEURAL COACH v4.0</h1>
+                 <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Link</span>
+                 </div>
+              </div>
+           </div>
+           <div className="hidden md:flex gap-2">
+              <span className="px-3 py-1 bg-slate-800 rounded-full border border-slate-700 text-[10px] font-black text-slate-400 uppercase tracking-widest">GEMINI CORE</span>
+              <span className="px-3 py-1 bg-slate-800 rounded-full border border-slate-700 text-[10px] font-black text-slate-400 uppercase tracking-widest">REAL-TIME BIOMETRICS</span>
+           </div>
         </div>
 
-        {/* Chat Container */}
-        <div className="flex-1 bg-gray-800/30 backdrop-blur-md rounded-2xl border border-gray-700 overflow-hidden flex flex-col shadow-2xl">
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        {/* Chat Interface Container */}
+        <div className="flex-1 glass-card rounded-[2.5rem] border-slate-800/80 overflow-hidden flex flex-col shadow-2xl relative">
+          {/* Scrollable Message History */}
+          <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-8 scrollbar-thin scrollbar-thumb-slate-800">
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} animate-slide-up`}
               >
                 <div
-                  className={`max-w-xs lg:max-w-md xl:max-w-lg rounded-xl px-4 py-3 ${
+                  className={`max-w-[85%] md:max-w-[70%] rounded-3xl px-6 py-4 shadow-2xl ${
                     message.sender === 'user'
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/20'
-                      : 'bg-gray-700/50 text-gray-100 border border-gray-600'
+                      ? 'bg-blue-600 text-white rounded-tr-none'
+                      : 'bg-slate-800/80 border border-slate-700/50 text-slate-100 rounded-tl-none'
                   }`}
                 >
-                  <p className="text-sm">{message.text}</p>
-                  <p className={`text-xs mt-2 ${
-                    message.sender === 'user' ? 'text-blue-100' : 'text-gray-400'
+                  <p className="text-sm font-medium leading-relaxed">{message.text}</p>
+                  <p className={`text-[10px] mt-2 font-black uppercase tracking-widest ${
+                    message.sender === 'user' ? 'text-blue-200' : 'text-slate-500'
                   }`}>
-                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} System.T
                   </p>
                 </div>
               </div>
             ))}
             {loading && (
-              <div className="flex justify-start">
-                <div className="bg-gray-700/50 border border-gray-600 rounded-xl px-4 py-3 flex items-center gap-2">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+              <div className="flex justify-start animate-enter">
+                <div className="bg-slate-800/80 border border-slate-700/50 rounded-3xl rounded-tl-none px-6 py-4 flex items-center gap-3">
+                   <div className="flex gap-1">
+                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce"></div>
+                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                   </div>
+                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Processing Bio-Data...</span>
                 </div>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Suggested Questions (show if no messages or at beginning) */}
+          {/* Quick Logic Ingress */}
           {messages.length === 1 && (
-            <div className="px-6 pb-4">
-              <p className="text-sm text-gray-400 mb-3">Quick suggestions:</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div className="px-8 pb-6 animate-enter">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {suggestedQuestions.map((question, idx) => (
                   <button
                     key={idx}
-                    onClick={() => handleSuggestedQuestion(question)}
-                    className="text-left p-3 bg-gray-700/50 hover:bg-gray-600/50 border border-gray-600 hover:border-blue-500 rounded-lg text-sm text-gray-200 transition-all"
+                    onClick={() => setInputValue(question)}
+                    className="text-left p-4 bg-slate-800 border border-slate-700 hover:border-blue-500 hover:bg-slate-700/50 rounded-2xl text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest transition-all line-clamp-1"
                   >
                     {question}
                   </button>
@@ -148,45 +156,26 @@ const AIChatCoach = () => {
             </div>
           )}
 
-          {/* Input Area */}
-          <div className="border-t border-gray-700 p-4 bg-gray-900/50">
-            <form onSubmit={sendMessage} className="flex gap-3">
+          {/* Input Terminal Area */}
+          <div className="p-6 md:p-8 bg-slate-950/50 border-t border-slate-800/50">
+            <form onSubmit={sendMessage} className="flex gap-4 relative group">
               <input
                 ref={inputRef}
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Ask your AI Coach..."
+                placeholder="Synchronize command..."
                 disabled={loading}
-                className="flex-1 bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:bg-gray-700 transition-all"
+                className="flex-1 h-14 bg-slate-900 border border-slate-800 rounded-2xl px-6 text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium"
               />
               <button
                 type="submit"
                 disabled={loading || !inputValue.trim()}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-semibold transition-all shadow-lg hover:shadow-blue-500/50"
+                className="bg-blue-600 hover:bg-blue-500 disabled:opacity-30 disabled:grayscale text-white w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-xl shadow-blue-500/20 active:scale-95"
               >
-                {loading ? '⏳' : '✉️'}
+                 <span className="text-xl">🚀</span>
               </button>
             </form>
-          </div>
-        </div>
-
-        {/* Features Grid */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-gradient-to-br from-blue-900/30 to-blue-800/20 border border-blue-500/30 rounded-lg p-4 text-center">
-            <div className="text-3xl mb-2">💪</div>
-            <h3 className="text-sm font-semibold text-blue-300">Workout Advice</h3>
-            <p className="text-xs text-gray-400 mt-1">Personalized training plans</p>
-          </div>
-          <div className="bg-gradient-to-br from-green-900/30 to-green-800/20 border border-green-500/30 rounded-lg p-4 text-center">
-            <div className="text-3xl mb-2">🥗</div>
-            <h3 className="text-sm font-semibold text-green-300">Diet Guidance</h3>
-            <p className="text-xs text-gray-400 mt-1">Nutrition recommendations</p>
-          </div>
-          <div className="bg-gradient-to-br from-purple-900/30 to-purple-800/20 border border-purple-500/30 rounded-lg p-4 text-center">
-            <div className="text-3xl mb-2">🧘</div>
-            <h3 className="text-sm font-semibold text-purple-300">Recovery Tips</h3>
-            <p className="text-xs text-gray-400 mt-1">Injury prevention & wellness</p>
           </div>
         </div>
       </div>

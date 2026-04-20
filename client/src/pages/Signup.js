@@ -1,7 +1,8 @@
-// Signup Page Component - Modern Design
+// Signup Page Component - Premium Modern Design
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/api';
+import { toast } from 'react-hot-toast';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -14,7 +15,6 @@ const Signup = () => {
     weight: '',
     fitnessGoal: 'general_fitness',
   });
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -24,10 +24,8 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      toast.error('Passwords do not match');
       return;
     }
 
@@ -45,190 +43,187 @@ const Signup = () => {
       });
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
+      toast.success('Welcome! Your account has been created! 🎉');
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Signup failed');
+      toast.error(err.response?.data?.message || 'Synchronization failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-cyan-700 flex items-center justify-center p-6 py-12">
-      {/* Animated Background Shapes */}
-      <div className="absolute top-0 left-0 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-cyan-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 py-12 relative overflow-hidden">
+      {/* Background Ambience */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] animate-pulse"></div>
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] animate-pulse delayed-pulse"></div>
 
-      <div className="relative z-10 w-full max-w-2xl">
-        {/* Logo Section */}
-        <div className="text-center mb-8">
-          <div className="inline-block bg-gradient-to-br from-green-400 to-cyan-500 rounded-2xl p-4 mb-4">
-            <span className="text-5xl">💪</span>
+      <div className="relative z-10 w-full max-w-2xl animate-enter">
+        {/* Branding */}
+        <div className="text-center mb-10">
+          <div className="inline-block bg-gradient-to-br from-blue-500 to-indigo-600 rounded-[1.5rem] p-4 mb-4 shadow-2xl shadow-blue-500/20">
+             <span className="text-5xl">💪</span>
           </div>
-          <h1 className="text-4xl font-bold text-white mb-2">AI Gym Coach</h1>
-          <p className="text-blue-100 text-lg">Start Your Fitness Journey Today</p>
+          <h1 className="text-4xl font-black text-white tracking-tighter mb-2">Smart Gym AI</h1>
+          <p className="text-slate-400 font-medium">Get personalized fitness coaching</p>
         </div>
 
-        {/* Signup Card */}
-        <div className="bg-white rounded-3xl shadow-2xl p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Create Account</h2>
-          <p className="text-gray-600 mb-8">Join thousands of fitness enthusiasts</p>
+        {/* Global Container */}
+        <div className="glass-card p-10 rounded-[2.5rem] border-slate-800/80">
+          <div className="mb-10 text-center md:text-left">
+             <h2 className="text-3xl font-black text-white tracking-tight">Create Your Account</h2>
+             <p className="text-slate-500 text-sm font-medium">Let's get started on your fitness journey</p>
+          </div>
 
-          {/* Error Message */}
-          {error && (
-            <div className="mb-6 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-lg flex items-start gap-3">
-              <span className="text-xl">⚠️</span>
-              <p className="font-semibold">{error}</p>
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Full Name */}
-            <div>
-              <label className="block text-sm font-bold text-gray-900 mb-2">Full Name</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition"
-                placeholder="John Doe"
-                required
-              />
-            </div>
-
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-bold text-gray-900 mb-2">Email Address</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition"
-                placeholder="you@example.com"
-                required
-              />
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Name & Email */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Your Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="input-field"
+                  placeholder="John Doe"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Email Address</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="input-field"
+                  placeholder="you@example.com"
+                  required
+                />
+              </div>
             </div>
 
-            {/* Password Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-sm font-bold text-gray-900 mb-2">Password</label>
+            {/* Password */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Password</label>
                 <input
                   type="password"
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition"
-                  placeholder="••••••••"
+                  className="input-field"
+                  placeholder="••••••••••••"
                   required
                 />
               </div>
-              <div>
-                <label className="block text-sm font-bold text-gray-900 mb-2">Confirm Password</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Confirm Password</label>
                 <input
                   type="password"
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition"
-                  placeholder="••••••••"
+                  className="input-field"
+                  placeholder="••••••••••••"
                   required
                 />
               </div>
             </div>
 
-            {/* Age, Height, Weight Grid */}
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-bold text-gray-900 mb-2">Age</label>
+            {/* Physical Metrics */}
+            <div className="grid grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Age</label>
                 <input
                   type="number"
                   name="age"
                   value={formData.age}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition"
-                  placeholder="25"
+                  className="input-field"
+                  placeholder="24"
                   required
                 />
               </div>
-              <div>
-                <label className="block text-sm font-bold text-gray-900 mb-2">Height (cm)</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Height (cm)</label>
                 <input
                   type="number"
                   name="height"
                   value={formData.height}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition"
-                  placeholder="180"
+                  className="input-field"
+                  placeholder="175"
                   required
                 />
               </div>
-              <div>
-                <label className="block text-sm font-bold text-gray-900 mb-2">Weight (kg)</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Weight (kg)</label>
                 <input
                   type="number"
                   name="weight"
                   value={formData.weight}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition"
-                  placeholder="75"
+                  className="input-field"
+                  placeholder="70"
                   required
                 />
               </div>
             </div>
 
             {/* Fitness Goal */}
-            <div>
-              <label className="block text-sm font-bold text-gray-900 mb-3">Fitness Goal</label>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">What's Your Fitness Goal?</label>
               <select
                 name="fitnessGoal"
                 value={formData.fitnessGoal}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition bg-white"
+                className="input-field appearance-none"
               >
                 <option value="general_fitness">General Fitness</option>
-                <option value="weight_loss">Weight Loss</option>
-                <option value="muscle_gain">Muscle Gain</option>
-                <option value="endurance">Endurance</option>
-                <option value="flexibility">Flexibility</option>
+                <option value="weight_loss">Lose Weight</option>
+                <option value="muscle_gain">Build Muscle</option>
+                <option value="strength">Gain Strength</option>
+                <option value="endurance">Improve Endurance</option>
               </select>
             </div>
 
-            {/* Terms Checkbox */}
-            <label className="flex items-start gap-3 text-gray-600 text-sm">
-              <input type="checkbox" className="rounded w-4 h-4 mt-1" required />
-              <span>
-                I agree to the <a href="#" className="text-blue-600 font-semibold hover:underline">Terms of Service</a> and{' '}
-                <a href="#" className="text-blue-600 font-semibold hover:underline">Privacy Policy</a>
-              </span>
-            </label>
+            <div className="pt-4 flex items-center gap-3">
+              <input type="checkbox" className="w-5 h-5 rounded border-slate-700 bg-slate-800 text-blue-600 focus:ring-0" required />
+              <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                I agree to the terms and allow Smart Gym AI to help me reach my fitness goals
+              </p>
+            </div>
 
-            {/* Signup Button */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl font-bold text-lg hover:shadow-lg transition disabled:opacity-50 mt-8"
+              className="w-full btn-primary h-14 text-lg"
             >
-              {loading ? '🔄 Creating Account...' : '🚀 Create Account'}
+              {loading ? 'Creating account...' : 'Create Account'}
             </button>
           </form>
 
-          {/* Login Link */}
-          <p className="text-center text-gray-600 mt-6">
-            Already have an account?{' '}
-            <Link to="/login" className="text-blue-600 hover:text-blue-700 font-bold">
-              Login here
-            </Link>
-          </p>
+          <div className="mt-10 pt-8 border-t border-slate-800 text-center">
+             <p className="text-slate-500 text-sm font-medium">
+                Already have an account?{' '}
+                <Link to="/login" className="text-blue-500 hover:text-blue-400 font-black px-1 transition-colors">
+                  Sign In
+                </Link>
+             </p>
+          </div>
         </div>
 
         {/* Footer */}
-        <p className="text-center text-blue-100 mt-8 text-sm">
-          🔒 Your data is secure and encrypted
-        </p>
+        <div className="mt-10 flex flex-col items-center gap-2 opacity-40">
+           <div className="flex gap-4">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-[.3em]">Secure</span>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-[.3em]">Privacy First</span>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-[.3em]">Encrypted</span>
+           </div>
+           <p className="text-[10px] text-slate-500 font-black">© 2026 Smart Gym AI</p>
+        </div>
       </div>
     </div>
   );

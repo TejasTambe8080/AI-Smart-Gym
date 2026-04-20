@@ -1,21 +1,12 @@
-// Dashboard Page Component - Shows stats and workout history
+// Premium Dashboard Page - Performance Intelligence Terminal
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { workoutService } from '../services/api';
+import SkeletonLoader from '../components/SkeletonLoader';
+import EmptyState from '../components/EmptyState';
 import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
+  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area
 } from 'recharts';
 
 const Dashboard = () => {
@@ -27,303 +18,195 @@ const Dashboard = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   useEffect(() => {
-    fetchStats();
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [statsRes, workoutsRes] = await Promise.all([
+          workoutService.getStats(period),
+          workoutService.getWorkouts({ limit: 10 })
+        ]);
+        setStats(statsRes.data.stats);
+        setWorkouts(workoutsRes.data.workouts || []);
+      } catch (error) {
+        console.error('Data Fetch Failure:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
   }, [period]);
 
-  useEffect(() => {
-    fetchWorkouts();
-  }, []);
+  const chartData = (workouts || []).map(w => ({
+    name: new Date(w.date).toLocaleDateString([], { month: 'short', day: 'numeric' }),
+    score: w.postureScore,
+    reps: w.reps
+  })).reverse();
 
-  const fetchStats = async () => {
-    try {
-      setLoading(true);
-      const response = await workoutService.getStats(period);
-      setStats(response.data.stats);
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleStart = () => navigate('/workout');
 
-  const fetchWorkouts = async () => {
-    try {
-      const response = await workoutService.getWorkouts({ limit: 50 });
-      setWorkouts(response.data.workouts || []);
-    } catch (error) {
-      console.error('Error fetching workouts:', error);
-      setWorkouts([]);
-    }
-  };
-
-  // Generate chart data from workouts by date
-  const generateChartData = () => {
-    if (!workouts || workouts.length === 0) {
-      return [];
-    }
-
-    // Group workouts by date
-    const workoutsByDate = {};
-    workouts.forEach((workout) => {
-      const date = new Date(workout.date);
-      const dateKey = date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-      });
-
-      if (!workoutsByDate[dateKey]) {
-        workoutsByDate[dateKey] = {
-          name: dateKey,
-          reps: 0,
-          duration: 0,
-          workouts: 0,
-        };
-      }
-      workoutsByDate[dateKey].reps += workout.reps || 0;
-      workoutsByDate[dateKey].duration += (workout.duration || 0) / 60; // Convert to minutes
-      workoutsByDate[dateKey].workouts += 1;
-    });
-
-    // Return last 7 days
-    return Object.values(workoutsByDate).slice(-7);
-  };
-
-  const chartData = generateChartData();
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
-
-  const startWorkout = () => {
-    navigate('/workout');
-  };
-
-  const pieData = Object.entries(stats?.exerciseBreakdown || {}).map(([name, value]) => ({
-    name,
-    value,
-  }));
-
-  const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
+  if (loading) return <div className="p-8"><SkeletonLoader type="dashboard" /></div>;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-blue-600">💪 AI Smart Gym</h1>
-            <p className="text-gray-600">Welcome back, {user.name}!</p>
+    <div className="min-h-screen bg-slate-900/50 p-6 lg:p-8 animate-enter">
+      <div className="max-w-7xl mx-auto space-y-10">
+        {/* Header Logic */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-1">
+            <h1 className="text-4xl font-black text-white tracking-tight italic">Performance <span className="text-blue-500">Overview</span></h1>
+            <p className="text-slate-400 font-medium">Synchronized with Neural Link v4.0. Welcome back, {user.name}.</p>
           </div>
           <div className="flex gap-4">
-            <button onClick={startWorkout} className="btn-primary">
-              Start Workout
-            </button>
-            <button onClick={handleLogout} className="btn-secondary">
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm font-semibold mb-2">Total Workouts</p>
-                <p className="text-4xl font-bold text-blue-600">{stats?.totalWorkouts || 0}</p>
-              </div>
-              <div className="text-5xl">📋</div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm font-semibold mb-2">Total Reps</p>
-                <p className="text-4xl font-bold text-green-600">{stats?.totalReps || 0}</p>
-              </div>
-              <div className="text-5xl">🔢</div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm font-semibold mb-2">Avg Posture</p>
-                <p className="text-4xl font-bold text-orange-600">
-                  {stats?.averagePostureScore || 0}%
-                </p>
-              </div>
-              <div className="text-5xl">🧘</div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm font-semibold mb-2">Calories Burned</p>
-                <p className="text-4xl font-bold text-red-600">{stats?.totalCalories || 0}</p>
-              </div>
-              <div className="text-5xl">🔥</div>
-            </div>
+             <button onClick={handleStart} className="btn-primary h-12 !px-8 shadow-xl shadow-blue-500/20">Initialize Workout</button>
           </div>
         </div>
 
-        {/* Period Selector */}
-        <div className="mb-8">
-          <div className="flex gap-4">
-            <button
-              onClick={() => setPeriod('day')}
-              className={`px-6 py-2 rounded-lg font-semibold transition ${
-                period === 'day'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              Day
-            </button>
-            <button
-              onClick={() => setPeriod('week')}
-              className={`px-6 py-2 rounded-lg font-semibold transition ${
-                period === 'week'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              Week
-            </button>
-            <button
-              onClick={() => setPeriod('month')}
-              className={`px-6 py-2 rounded-lg font-semibold transition ${
-                period === 'month'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              Month
-            </button>
-          </div>
+        {/* Global Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            { label: 'Total Sessions', value: stats?.totalWorkouts || 0, icon: '📋', color: 'blue' },
+            { label: 'Neural Precision', value: `${stats?.averagePostureScore || 0}%`, icon: '🧠', color: 'emerald' },
+            { label: 'Bio-Mass Moved', value: stats?.totalReps || 0, icon: '🏗️', color: 'amber' },
+            { label: 'Metabolic Load', value: stats?.totalCalories || 0, icon: '🔥', color: 'rose' }
+          ].map((stat, idx) => (
+            <div key={idx} className="premium-card p-6 border-slate-800/60 hover:border-blue-500/30 transition-all group">
+               <div className="flex justify-between items-start">
+                  <div className="space-y-4">
+                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">{stat.label}</p>
+                     <p className="text-4xl font-black text-white italic tracking-tighter">{stat.value}</p>
+                  </div>
+                  <div className={`w-12 h-12 rounded-2xl bg-${stat.color}-500/10 flex items-center justify-center text-xl grayscale opacity-30 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500`}>
+                     {stat.icon}
+                  </div>
+               </div>
+            </div>
+          ))}
         </div>
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Line Chart - Reps & Duration */}
-          <div className="card">
-            <h2 className="text-xl font-bold mb-4 text-gray-900">Workout Progress</h2>
-            {chartData && chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="reps" stroke="#3B82F6" strokeWidth={2} />
-                  <Line
-                    type="monotone"
-                    dataKey="duration"
-                    stroke="#10B981"
-                    strokeWidth={2}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="w-full h-[300px] flex items-center justify-center bg-gray-100 rounded-lg">
-                <p className="text-gray-500">No workout data yet. Start your first workout!</p>
-              </div>
-            )}
-          </div>
-
-          {/* Pie Chart - Exercise Breakdown */}
-          <div className="card">
-            <h2 className="text-xl font-bold mb-4 text-gray-900">Exercise Distribution</h2>
-            {pieData && pieData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, value }) => `${name}: ${value}`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+        {/* Time-Series Analytics */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+           <div className="lg:col-span-2 premium-card p-8">
+              <div className="flex justify-between items-center mb-8">
+                 <h2 className="text-xl font-black text-white tracking-tight uppercase italic flex items-center gap-3">
+                    <span className="w-1.5 h-6 bg-blue-500 rounded-full"></span>
+                    Performance Delta
+                 </h2>
+                 <div className="flex gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                    {['day', 'week', 'month'].map(p => (
+                      <button 
+                        key={p} 
+                        onClick={() => setPeriod(p)}
+                        className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${period === p ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-white'}`}
+                      >
+                         {p}
+                      </button>
                     ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="w-full h-[300px] flex items-center justify-center bg-gray-100 rounded-lg">
-                <p className="text-gray-500">No exercise data yet</p>
+                 </div>
               </div>
-            )}
-          </div>
+              
+              <div className="h-[350px]">
+                 <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartData}>
+                       <defs>
+                          <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
+                             <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
+                             <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                          </linearGradient>
+                       </defs>
+                       <XAxis dataKey="name" stroke="#475569" fontSize={10} fontWeight="bold" tickLine={false} axisLine={false} />
+                       <YAxis stroke="#475569" fontSize={10} fontWeight="bold" tickLine={false} axisLine={false} />
+                       <Tooltip 
+                         contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
+                         itemStyle={{ color: '#fff', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase' }}
+                       />
+                       <Area type="monotone" dataKey="score" stroke="#3B82F6" strokeWidth={4} fillOpacity={1} fill="url(#colorScore)" />
+                       <Area type="monotone" dataKey="reps" stroke="#10B981" strokeWidth={2} fillOpacity={0} />
+                    </AreaChart>
+                 </ResponsiveContainer>
+              </div>
+           </div>
+
+           <div className="premium-card p-8 flex flex-col">
+              <h2 className="text-xl font-black text-white mb-8 tracking-tight uppercase italic">Protocol Mix</h2>
+              <div className="flex-1 flex flex-col items-center justify-center">
+                 <ResponsiveContainer width="100%" height={250}>
+                    <PieChart>
+                       <Pie
+                          data={Object.entries(stats?.exerciseBreakdown || {}).map(([name, value]) => ({ name, value }))}
+                          innerRadius={60}
+                          outerRadius={80}
+                          paddingAngle={5}
+                          dataKey="value"
+                       >
+                          {Object.keys(stats?.exerciseBreakdown || {}).map((entry, index) => (
+                             <Cell key={`cell-${index}`} fill={['#3B82F6', '#6366F1', '#8B5CF6', '#EC4899', '#EF4444'][index % 5]} />
+                          ))}
+                       </Pie>
+                       <Tooltip />
+                    </PieChart>
+                 </ResponsiveContainer>
+                 <div className="grid grid-cols-2 gap-4 w-full mt-6">
+                    {Object.entries(stats?.exerciseBreakdown || {}).slice(0, 4).map(([name, value], i) => (
+                       <div key={name} className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ['#3B82F6', '#6366F1', '#8B5CF6', '#EC4899'][i % 4] }}></div>
+                          <span className="text-[10px] font-black text-slate-500 uppercase truncate">{name}</span>
+                       </div>
+                    ))}
+                 </div>
+              </div>
+           </div>
         </div>
 
-        {/* Recent Workouts */}
-        <div className="card">
-          <h2 className="text-2xl font-bold mb-6 text-gray-900">Recent Workouts</h2>
-          {workouts && workouts.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Date</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Exercise</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Reps</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Duration</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Posture</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {workouts.map((workout) => (
-                    <tr key={workout._id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4">
-                        {new Date(workout.date).toLocaleDateString()}
-                      </td>
-                      <td className="py-3 px-4 font-semibold capitalize">{workout.exerciseType}</td>
-                      <td className="py-3 px-4">{workout.reps}</td>
-                      <td className="py-3 px-4">{Math.round(workout.duration / 60)}m</td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`px-2 py-1 rounded text-sm font-semibold ${
-                            workout.postureScore >= 80
-                              ? 'bg-green-100 text-green-800'
-                              : workout.postureScore >= 60
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {workout.postureScore}%
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-gray-500 mb-4">No workouts yet</p>
-              <button
-                onClick={startWorkout}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition"
-              >
-                Start Your First Workout
-              </button>
-            </div>
-          )}
+        {/* Binary Stream - Recent Activity */}
+        <div className="premium-card p-0 overflow-hidden">
+           <div className="p-8 border-b border-slate-800 flex justify-between items-center">
+              <h2 className="text-xl font-black text-white tracking-tight uppercase italic">Neural Logs // RECENT</h2>
+              <button onClick={() => navigate('/activity')} className="text-[10px] font-black text-blue-500 uppercase tracking-widest hover:text-blue-400 transition-colors">Expand full stream →</button>
+           </div>
+           {workouts.length > 0 ? (
+             <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                   <thead className="bg-slate-950/50">
+                      <tr>
+                         <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Protocol ID</th>
+                         <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Exercise Base</th>
+                         <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Load</th>
+                         <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Precision</th>
+                         <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Status</th>
+                      </tr>
+                   </thead>
+                   <tbody className="divide-y divide-slate-800">
+                      {workouts.map((w) => (
+                        <tr key={w._id} className="hover:bg-slate-800/30 transition-colors group">
+                           <td className="px-8 py-5 text-xs font-bold text-slate-400 font-mono tracking-tighter">
+                              {new Date(w.date).toLocaleDateString()} // {new Date(w.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                           </td>
+                           <td className="px-8 py-5">
+                              <span className="text-sm font-black text-white italic uppercase tracking-tight">{w.exerciseType}</span>
+                           </td>
+                           <td className="px-8 py-5 text-sm font-bold text-slate-300 italic">{w.reps} units</td>
+                           <td className="px-8 py-5">
+                              <div className="flex items-center gap-3">
+                                 <div className="flex-1 h-1 bg-slate-800 rounded-full w-20">
+                                    <div className={`h-full rounded-full ${w.postureScore > 80 ? 'bg-emerald-500' : 'bg-amber-500'}`} style={{ width: `${w.postureScore}%` }}></div>
+                                 </div>
+                                 <span className="text-xs font-black text-white italic">{w.postureScore}%</span>
+                              </div>
+                           </td>
+                           <td className="px-8 py-5">
+                              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${w.postureScore > 80 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
+                                 {w.postureScore > 80 ? 'SYNCHRONIZED' : 'DEVIATED'}
+                              </span>
+                           </td>
+                        </tr>
+                      ))}
+                   </tbody>
+                </table>
+             </div>
+           ) : (
+             <EmptyState title="No Neural Logs" message="Initialize your first training protocol to populate the analysis stream." />
+           )}
         </div>
-      </main>
+      </div>
     </div>
   );
 };
