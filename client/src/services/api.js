@@ -16,40 +16,26 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Demo Mode Helper
-const isDemoMode = () => localStorage.getItem('demo_mode') === 'true';
-
-const mockData = {
-  stats: {
-    totalWorkouts: 42,
-    totalDuration: 1250,
-    totalReps: 8500,
-    totalCalories: 15400,
-    averagePostureScore: 88,
-    currentStreak: 12,
-    level: 5,
-    weakMuscles: ['Triceps', 'Lower Back'],
-    weeklyProgress: { percentage: 75, completed: 3, goal: 4 },
-    dailyStats: []
-  },
-  workouts: [
-    { _id: 'mock1', exerciseType: 'squat', reps: 20, duration: 120, postureScore: 92, date: new Date() },
-    { _id: 'mock2', exerciseType: 'push_up', reps: 15, duration: 60, postureScore: 85, date: new Date(Date.now() - 86400000) }
-  ]
-};
-
 // Auth Services
 export const authService = {
   signup: (data) => api.post('/auth/signup', data),
-  login: (data) => isDemoMode() ? Promise.resolve({ data: { success: true, token: 'demo_token', user: { name: 'Demo User', email: 'demo@formfix.ai' } } }) : api.post('/auth/login', data),
-  getProfile: () => isDemoMode() ? Promise.resolve({ data: { user: { name: 'Demo User' } } }) : api.get('/auth/profile'),
+  login: (data) => api.post('/auth/login', data),
+  getProfile: () => api.get('/auth/profile'),
   updateProfile: (data) => api.put('/auth/update', data),
+};
+
+// Trainer Services
+export const trainerService = {
+  register: (data) => api.post('/trainers/register', data),
+  getAll: () => api.get('/trainers'),
+  bookSession: (data) => api.post('/trainers/book', data),
+  getMyBookings: () => api.get('/trainers/my-bookings'),
+  getClients: () => api.get('/trainers/clients'),
 };
 
 // Workout Services
 export const workoutService = {
   createWorkout: async (data) => {
-    if (isDemoMode()) return Promise.resolve({ data: { success: true, workout: { ...data, _id: 'demo' } } });
     if (!navigator.onLine) {
       const offlineQueue = JSON.parse(localStorage.getItem('offline_workouts') || '[]');
       const offlineWorkout = { ...data, id: Date.now(), isOffline: true, date: new Date() };
@@ -57,10 +43,7 @@ export const workoutService = {
       localStorage.setItem('offline_workouts', JSON.stringify(offlineQueue));
       return { data: { success: true, message: 'Saved locally. Syncing when online.', workout: offlineWorkout } };
     }
-    return api.post('/workouts', data).catch(err => {
-       if (isDemoMode()) return Promise.resolve({ data: { success: true, workout: data } });
-       throw err;
-    });
+    return api.post('/workouts', data);
   },
   syncOfflineWorkouts: async () => {
     const offlineQueue = JSON.parse(localStorage.getItem('offline_workouts') || '[]');
@@ -73,11 +56,11 @@ export const workoutService = {
     }
     localStorage.removeItem('offline_workouts');
   },
-  getWorkouts: (params) => isDemoMode() ? Promise.resolve({ data: { workouts: mockData.workouts } }) : api.get('/workouts', { params }).catch(err => ({ data: { workouts: mockData.workouts } })),
+  getWorkouts: (params) => api.get('/workouts', { params }),
   getWorkout: (id) => api.get(`/workouts/${id}`),
   updateWorkout: (id, data) => api.put(`/workouts/${id}`, data),
   deleteWorkout: (id) => api.delete(`/workouts/${id}`),
-  getStats: (period = 'week') => isDemoMode() ? Promise.resolve({ data: { success: true, stats: mockData.stats } }) : api.get('/workouts/stats/summary', { params: { period } }).catch(err => ({ data: { success: true, stats: mockData.stats } })),
+  getStats: (period = 'week') => api.get('/workouts/stats/summary', { params: { period } }),
 };
 
 // Exercise Services

@@ -66,16 +66,11 @@ const Diet = () => {
         toast.success("AI Diet Plan Generated!");
       }
     } catch (error) {
-      toast.error("AI Node Offline. Loading local nutritional protocol.");
-      setDietPlan({
-        rawResponse: "DAILY FUELING TARGETS:\n- Total Energy: 2,850 kcal\n- Protein Intake: 195g (Optimal Synthesis)\n- Carbohydrates: 310g (Energy Buffer)\n- Omega Fats: 85g (Joint Integrity)\n\nMEAL STRUCTURE:\n- BREAKFAST (Pre-Sync): Steel-cut oats with whey isolate, blueberries, and almond butter.\n- LUNCH (Post-Sync): Seared chicken breast (250g) with complex carbohydrates (quinoa) and fiber (broccoli).\n- DINNER (Recovery): Wild-caught salmon with sweet potato and fermented sides.\n\nNEURAL OPTIMIZATION TIPS:\n1. Hydration is vital for synaptic latency - Aim for 3.5L/day.\n2. Supplement with Creatine Monohydrate for ATP buffer expansion.\n3. Micronutrient density is priority - avoid processed caloric voids.",
-        height: formData.height || 175,
-        weight: formData.weight || 75,
-        goal: formData.goal || 'Hypertrophy'
-      });
+      toast.error("AI Node Offline or generation failed.");
     } finally {
       setLoading(false);
     }
+
   };
 
   if (initialLoading) return <div className="p-8"><SkeletonLoader type="dashboard" /></div>;

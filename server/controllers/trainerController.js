@@ -4,10 +4,94 @@ const Booking = require('../models/Booking');
 const Message = require('../models/Message');
 const UserStats = require('../models/UserStats');
 
+const bcrypt = require('bcryptjs');
+
+// Trainer Registration
+exports.registerTrainer = async (req, res) => {
+  try {
+    const { name, email, password, specialization, experience, pricePerSession, bio } = req.body;
+    
+    const existingTrainer = await Trainer.findOne({ email });
+    if (existingTrainer) {
+      return res.status(400).json({ message: 'Trainer with this email already exists' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const trainer = new Trainer({
+      name,
+      email,
+      password: hashedPassword,
+      specialization: specialization ? specialization.split(',') : [],
+      experience,
+      pricePerSession,
+      bio,
+      isVerified: false
+    });
+
+    await trainer.save();
+    res.status(201).json({ message: 'Trainer registered successfully. Pending verification.', trainer: { id: trainer._id, name: trainer.name, email: trainer.email } });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Admin Verify Trainer
+exports.verifyTrainer = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const trainer = await Trainer.findByIdAndUpdate(id, { isVerified: true }, { new: true });
+    if (!trainer) return res.status(404).json({ message: 'Trainer not found' });
+    res.json({ message: 'Trainer verified', trainer });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get single trainer
+exports.getTrainer = async (req, res) => {
+  try {
+    const trainer = await Trainer.findById(req.params.id).select('-password');
+    if (!trainer) return res.status(404).json({ message: 'Trainer not found' });
+    res.json(trainer);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Update trainer
+exports.updateTrainer = async (req, res) => {
+  try {
+    // Basic update - prevent password/verification updates here
+    const updates = { ...req.body };
+    delete updates.password;
+    delete updates.isVerified;
+    delete updates.email; // Usually don't update email directly
+    
+    const trainer = await Trainer.findByIdAndUpdate(req.params.id, updates, { new: true }).select('-password');
+    if (!trainer) return res.status(404).json({ message: 'Trainer not found' });
+    res.json(trainer);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Delete trainer
+exports.deleteTrainer = async (req, res) => {
+  try {
+    const trainer = await Trainer.findByIdAndDelete(req.params.id);
+    if (!trainer) return res.status(404).json({ message: 'Trainer not found' });
+    res.json({ message: 'Trainer deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // User Actions
 exports.getAllTrainers = async (req, res) => {
   try {
-    const trainers = await Trainer.find().select('-password');
+    // Only return verified trainers for common users
+    const query = req.user && req.user.role === 'admin' ? {} : { isVerified: true };
+    const trainers = await Trainer.find(query).select('-password');
     res.json(trainers);
   } catch (error) {
     res.status(500).json({ message: error.message });

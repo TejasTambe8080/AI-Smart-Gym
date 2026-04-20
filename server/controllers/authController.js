@@ -1,7 +1,7 @@
 // Authentication Controller - Handles signup and login
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const userService = require('../services/userService');
+const User = require('../models/User');
 
 // Generate JWT token
 const generateToken = (userId) => {
@@ -23,7 +23,7 @@ exports.signup = async (req, res) => {
     }
 
     // Check if user already exists
-    const existingUser = userService.findUserByEmail(email);
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
@@ -33,7 +33,7 @@ exports.signup = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Create new user
-    const user = userService.createUser({
+    const user = new User({
       name,
       email,
       password: hashedPassword,
@@ -42,12 +42,14 @@ exports.signup = async (req, res) => {
       height,
       fitnessGoal,
     });
+    
+    await user.save();
 
     // Generate token
     const token = generateToken(user._id);
 
     // Return user data without password
-    const userResponse = { ...user };
+    const userResponse = user.toObject();
     delete userResponse.password;
 
     console.log(`✅ [AUTH] User signed up: ${email}`);
@@ -67,6 +69,8 @@ exports.signup = async (req, res) => {
   }
 };
 
+const Trainer = require('../models/Trainer');
+
 // @route   POST /api/auth/login
 // @desc    Login a user
 // @access  Public
@@ -74,15 +78,20 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validation
     if (!email || !password) {
-      return res.status(400).json({ 
-        message: 'Please provide email and password' 
-      });
+      return res.status(400).json({ message: 'Please provide email and password' });
     }
 
-    // Check if user exists
-    const user = userService.findUserByEmail(email);
+    // Check if user exists as User
+    let user = await User.findOne({ email });
+    let isTrainer = false;
+
+    // If not User, check if Trainer
+    if (!user) {
+      user = await Trainer.findOne({ email });
+      isTrainer = true;
+    }
+
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
@@ -93,14 +102,12 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Generate token
     const token = generateToken(user._id);
 
-    // Return user data without password
-    const userResponse = { ...user };
+    const userResponse = user.toObject();
     delete userResponse.password;
 
-    console.log(`✅ [AUTH] User logged in: ${email}`);
+    console.log(`✅ [AUTH] ${isTrainer ? 'Trainer' : 'User'} logged in: ${email}`);
     res.status(200).json({
       message: 'Login successful',
       token,
@@ -122,13 +129,16 @@ exports.login = async (req, res) => {
 // @access  Private
 exports.getProfile = async (req, res) => {
   try {
-    const user = userService.findUserById(req.userId);
+    let user = await User.findById(req.userId).select('-password');
+    if (!user) {
+      user = await Trainer.findById(req.userId).select('-password');
+    }
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    const userResponse = { ...user };
-    delete userResponse.password;
-    res.status(200).json({ success: true, user: userResponse });
+    
+    res.status(200).json({ success: true, user });
   } catch (error) {
     console.error('❌ Get profile error:', error.message);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -142,26 +152,24 @@ exports.updateProfile = async (req, res) => {
   try {
     const { name, age, weight, height, fitnessGoal } = req.body;
     
-    const user = userService.updateUser(req.userId, {
-      name,
-      age,
-      weight,
-      height,
-      fitnessGoal,
-    });
+    // Determine if User or Trainer (For simplicity, just try updating User first)
+    let user = await User.findByIdAndUpdate(req.userId, {
+      name, age, weight, height, fitnessGoal
+    }, { new: true }).select('-password');
+
+    if (!user) {
+      user = await Trainer.findByIdAndUpdate(req.userId, req.body, { new: true }).select('-password');
+    }
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const userResponse = { ...user };
-    delete userResponse.password;
-
     console.log(`✅ [AUTH] Profile updated: ${user.email}`);
     res.status(200).json({ 
       success: true,
       message: 'Profile updated successfully',
-      user: userResponse 
+      user 
     });
   } catch (error) {
     console.error('❌ Update profile error:', error.message);

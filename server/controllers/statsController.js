@@ -260,36 +260,7 @@ exports.getUserStats = async (req, res) => {
     });
   } catch (error) {
     console.error('Error getting user stats:', error);
-    // Return sample data instead of error for demo resilience
-    res.status(200).json({
-      success: true,
-      demo: true,
-      data: {
-        totalWorkouts: 12,
-        totalDuration: 450,
-        totalReps: 1250,
-        totalCalories: 3200,
-        averagePostureScore: 92,
-        currentStreak: 5,
-        longestStreak: 12,
-        level: 4,
-        totalXP: 3450,
-        weeklyWorkouts: 4,
-        weeklyGoal: 5,
-        weeklyProgress: { completed: 4, goal: 5, percentage: 80 },
-        weakMuscles: [{ muscle: 'Shoulders', frequency: 2 }, { muscle: 'Back', frequency: 3 }],
-        badges: ['Early Bird', 'Consistency King'],
-        dailyStats: [
-          { date: '2026-04-14', workouts: 1 },
-          { date: '2026-04-15', workouts: 1 },
-          { date: '2026-04-16', workouts: 0 },
-          { date: '2026-04-17', workouts: 1 },
-          { date: '2026-04-18', workouts: 1 },
-          { date: '2026-04-19', workouts: 0 },
-          { date: '2026-04-20', workouts: 1 }
-        ]
-      }
-    });
+    res.status(500).json({ success: false, message: 'Failed to get user stats', error: error.message });
   }
 };
 

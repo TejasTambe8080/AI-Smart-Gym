@@ -38,33 +38,8 @@ const AnalyticsImproved = () => {
       setError(null);
     } catch (err) {
       console.error('Error fetching analytics:', err);
-      setError('Neural Link Sync Interrupted. Activating local data manifest.');
-      toast.error('Sync Error: Displaying historical cached data.');
-      
-      // Inject professional mock data for demo
-      setStats({
-        totalWorkouts: 42,
-        totalReps: 3850,
-        averagePostureScore: 94,
-        totalCalories: 12500,
-        currentStreak: 8,
-        level: 6
-      });
-      
-      const demoWorkouts = [];
-      const now = new Date();
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(now);
-        d.setDate(d.getDate() - i);
-        demoWorkouts.push({
-          _id: `dw${i}`,
-          exerciseType: i % 2 === 0 ? 'squat' : 'push_up',
-          reps: 15 + Math.floor(Math.random() * 10),
-          duration: 300 + Math.floor(Math.random() * 600),
-          date: d.toISOString()
-        });
-      }
-      setWorkouts(demoWorkouts);
+      toast.error('Could not sync analytics data. Server might be offline.');
+
     } finally {
       setLoading(false);
     }

@@ -14,6 +14,8 @@ const trainerSchema = new mongoose.Schema({
     day: { type: String },
     times: [{ type: String }]
   }],
+  pricePerSession: { type: Number, default: 0 },
+  isVerified: { type: Boolean, default: false },
   role: { type: String, default: 'trainer' },
   createdAt: { type: Date, default: Date.now }
 });

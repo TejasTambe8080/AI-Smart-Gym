@@ -42,30 +42,12 @@ const EnhancedDashboard = () => {
       }
       fetchInjuryRisk();
     } catch (e) { 
-      toast.error('Neural Link Sync Error. Activating local cache.');
-      // Injection of high-fidelity mock data for perfect demo
-      setStats({
-        stats: {
-          totalWorkouts: 24,
-          currentStreak: 7,
-          consistencyScore: 94,
-          level: 5,
-          averagePostureScore: 91,
-          totalXP: 5600,
-          weeklyProgress: { percentage: 85, completed: 6, goal: 7 },
-          weakMuscles: ['Shoulders', 'Lower Back']
-        }
-      });
-      setWorkouts([
-        { _id: 'd1', exerciseType: 'squat', reps: 15, date: new Date().toISOString() },
-        { _id: 'd2', exerciseType: 'push_up', reps: 20, date: new Date(Date.now() - 86400000).toISOString() },
-        { _id: 'd3', exerciseType: 'squat', reps: 12, date: new Date(Date.now() - 172800000).toISOString() }
-      ]);
-      setInsights({
-        insights: "STRENGTH PROTOCOL: Optimal volume detected in lower chain sectors. Neural integration shows 91% form fidelity. CAUTION: Asymmetrical loading pattern detected in thoracic region. ACTION: Implement lateral stability routines immediately."
-      });
+      toast.error('Failed to sync neural link. Core API might be offline.');
+      console.error(e);
+      setStats({ stats: null });
     }
     finally { setLoading(false); }
+
   };
 
   const fetchAIInsights = async (s) => {

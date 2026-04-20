@@ -8,6 +8,7 @@ import { Toaster } from 'react-hot-toast';
 const Landing = lazy(() => import('./pages/Landing'));
 const Login = lazy(() => import('./pages/Login'));
 const Signup = lazy(() => import('./pages/Signup'));
+const TrainerSignup = lazy(() => import('./pages/TrainerSignup'));
 const AboutUs = lazy(() => import('./pages/AboutUs'));
 const Careers = lazy(() => import('./pages/Careers'));
 const Privacy = lazy(() => import('./pages/Privacy'));
@@ -93,7 +94,9 @@ function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/trainer-signup" element={<TrainerSignup />} />
             <Route path="/about" element={<AboutUs />} />
+
             <Route path="/careers" element={<Careers />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/legal" element={<Legal />} />

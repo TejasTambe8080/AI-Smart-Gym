@@ -52,13 +52,11 @@ const AISuggestionsImproved = () => {
         toast.success("Intelligence stream synchronized! 🧠");
       }
     } catch (error) {
-      toast.error("Neural Bridge Offline. Accessing historical strategy cache.");
-      setSuggestionData({
-        suggestions: "TACTICAL RECALIBRATION REQUIRED:\n\n1. POSTURE DEFICIT REMEDIATION: Your current thoracic alignment shows a 9% deviation from neutral. Shift focus to scapular retraction during all 'Pull' protocols.\n\n2. HYPERTROPHY OPTIMIZATION: Identified under-activation in your Shoulders. Implement lateral raise supersets with a 3-second eccentric phase to force biological adaptation.\n\n3. RECOVERY PROTOCOL: You have maintained an elite 7-day streak. To prevent central nervous system fatigue, reduce volume by 20% tomorrow but maintain current intensity (RPE 8).",
-      });
+      toast.error("Neural Bridge Offline or sync failed.");
     } finally {
       setGenerating(false);
     }
+
   };
 
   if (loading) return <div className="p-8"><SkeletonLoader type="dashboard" /></div>;

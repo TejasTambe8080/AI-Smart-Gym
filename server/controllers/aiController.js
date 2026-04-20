@@ -122,61 +122,48 @@ exports.getWorkoutSuggestions = async (req, res) => {
 // Get AI Performance Insights (Comparative Analysis)
 exports.getPerformanceInsights = async (req, res) => {
   try {
-    const userId = req.userId || 'user_demo';
+    const { postureScore, totalWorkouts, weakMuscles } = req.body;
+    const userId = req.user?.id || req.userId;
 
-    // Fallback insights data when services are unavailable
-    const fallbackInsights = {
-      summary: 'You\'re doing great! Your posture accuracy is 88% and you\'re maintaining consistent workout frequency. Keep pushing!',
-      key_improvement: { 
-        metric: 'Form Accuracy', 
-        delta: '+8%', 
-        msg: 'Your form is getting better. Excellent progress!' 
-      },
-      risk_warning: { 
-        level: 'LOW', 
-        msg: 'No concerning patterns detected. You\'re exercising safely.' 
-      },
-      next_action: 'Increase weights by 5% for compound movements to continue progress.',
-      improvements: [
-        { metric: 'Volume', delta: '+15%', analysis: 'You\'re increasing workout volume consistently.' },
-        { metric: 'Consistency', delta: '+20%', analysis: 'Working out more frequently than last week.' }
-      ],
-      recommendations: [
-        'Focus on form quality over volume',
-        'Get 8 hours of sleep for recovery',
-        'Increase water intake during workouts'
-      ]
-    };
+    let existingInsight = await Insight.findOne({ userId });
+
+    if (existingInsight) {
+      return res.status(200).json({
+        success: true,
+        data: existingInsight
+      });
+    }
+
+    const prompt = `
+      User stats:
+      Posture score: ${postureScore || 85}%
+      Total workouts: ${totalWorkouts || 0}
+      Weak muscles: ${Array.isArray(weakMuscles) ? weakMuscles.join(', ') : 'None identified'}
+      
+      Act as an elite biometric performance analyst.
+      Based on the past week data, provide 3 short, punchy insights into the user's performance and injury risks.
+      Do not use JSON formatting. Provide a readable string summary with clear headers and bullet points.
+    `;
+
+    const aiResponseText = await generateAIResponse(prompt);
+
+    const newInsight = new Insight({
+      userId,
+      postureScore: postureScore || 85,
+      totalWorkouts: totalWorkouts || 0,
+      insights: aiResponseText
+    });
+
+    await newInsight.save();
 
     res.status(200).json({ 
       success: true, 
-      data: {
-        _id: 'insight_1',
-        userId,
-        postureScore: 88,
-        totalWorkouts: 5,
-        insights: JSON.stringify(fallbackInsights),
-        createdAt: new Date()
-      }
+      data: newInsight
     });
 
   } catch (error) {
     console.error('Insights Synthesis Error:', error);
-    res.status(200).json({ 
-      success: true, 
-      data: {
-        _id: 'insight_1',
-        userId: 'user_demo',
-        postureScore: 88,
-        totalWorkouts: 5,
-        insights: JSON.stringify({
-          summary: 'You\'re doing great! Keep it up!',
-          improvements: [],
-          recommendations: []
-        }),
-        createdAt: new Date()
-      }
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
