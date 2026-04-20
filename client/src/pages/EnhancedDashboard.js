@@ -42,7 +42,7 @@ const EnhancedDashboard = () => {
       }
       fetchInjuryRisk();
     } catch (e) { 
-      toast.error('Failed to sync neural link. Core API might be offline.');
+      toast.error('Couldn\'t load your workout data. Please check your internet connection.');
       console.error(e);
       setStats({ stats: null });
     }

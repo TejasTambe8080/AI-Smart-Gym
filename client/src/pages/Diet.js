@@ -66,7 +66,7 @@ const Diet = () => {
         toast.success("AI Diet Plan Generated!");
       }
     } catch (error) {
-      toast.error("AI Node Offline or generation failed.");
+      toast.error("Couldn't generate your diet plan. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -79,8 +79,8 @@ const Diet = () => {
     <div className="min-h-screen bg-slate-900/50 p-6 lg:p-8 animate-enter">
       <div className="max-w-7xl mx-auto space-y-12">
         <div className="space-y-2">
-          <h1 className="text-4xl font-black text-white tracking-widest uppercase italic leading-none">AI BIOLOGICAL <span className="text-blue-500">FUELING</span></h1>
-          <p className="text-slate-400 font-medium italic">Precision hyper-nutrient protocols powered by Gemini Neural Core.</p>
+          <h1 className="text-4xl font-black text-white tracking-widest uppercase italic leading-none">Your Personal <span className="text-blue-500">Nutrition Plan</span></h1>
+          <p className="text-slate-400 font-medium italic">Customized meal plans designed to help you reach your fitness goals.</p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-10">
@@ -89,11 +89,11 @@ const Diet = () => {
             <div className="premium-card p-8 bg-slate-900 border-slate-800 shadow-2xl">
               <h2 className="text-xl font-black text-white mb-8 tracking-tight uppercase italic flex items-center gap-3">
                 <span className="w-1.5 h-6 bg-blue-500 rounded-full"></span>
-                Protocol Params
+                Your Information
               </h2>
               <form onSubmit={generatePlan} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] ml-1">Height (CM)</label>
+                  <label className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] ml-1">Height (cm)</label>
                   <input
                     type="number"
                     name="height"

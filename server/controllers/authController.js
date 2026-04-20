@@ -18,14 +18,14 @@ exports.signup = async (req, res) => {
     // Validation
     if (!name || !email || !password) {
       return res.status(400).json({ 
-        message: 'Please provide name, email, and password' 
+        message: 'Please fill in all the required fields' 
       });
     }
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ message: 'This email is already registered. Try logging in instead.' });
     }
 
     // Hash password
@@ -79,7 +79,7 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ message: 'Please provide email and password' });
+      return res.status(400).json({ message: 'Please enter your email and password' });
     }
 
     // Check if user exists as User
@@ -93,13 +93,13 @@ exports.login = async (req, res) => {
     }
 
     if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(400).json({ message: 'Email not found. Please sign up first.' });
     }
 
     // Check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(400).json({ message: 'Incorrect password. Please try again.' });
     }
 
     const token = generateToken(user._id);

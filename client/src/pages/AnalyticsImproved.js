@@ -38,7 +38,7 @@ const AnalyticsImproved = () => {
       setError(null);
     } catch (err) {
       console.error('Error fetching analytics:', err);
-      toast.error('Could not sync analytics data. Server might be offline.');
+      toast.error('Couldn\'t load your analytics. Please try again.');
 
     } finally {
       setLoading(false);
