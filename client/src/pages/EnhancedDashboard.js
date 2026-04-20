@@ -100,7 +100,7 @@ const EnhancedDashboard = () => {
           {[
             { l: 'Protocol Cycles', v: s.totalWorkouts || 0, i: '🧬', c: 'blue' },
             { l: 'Temporal Streak', v: s.currentStreak || 0, i: '🔥', c: 'orange' },
-            { l: 'Consistency Score', v: `${s.consistencyScore || 0}%`, i: '📈', c: 'emerald' },
+            { l: 'Consistency Score', v: `${s.weeklyProgress?.percentage || 0}%`, i: '📈', c: 'emerald' },
             { l: 'Evolution Level', v: s.level || 1, i: '⭐', c: 'purple' }
 
           ].map((item, idx) => (
@@ -113,12 +113,75 @@ const EnhancedDashboard = () => {
                   <div className={`text-3xl opacity-20 grayscale group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700`}>{item.i}</div>
                </div>
                <div className="mt-6 h-1 w-full bg-slate-900 rounded-full overflow-hidden">
-                  <div className={`h-full bg-${item.c}-500 transition-all duration-1000`} style={{ width: item.v.toString().includes('%') ? item.v : '60%' }}></div>
+                  <div className={`h-full bg-${item.c}-500 transition-all duration-1000`} style={{ width: String(item.v).includes('%') ? item.v : '60%' }}></div>
                </div>
 
             </div>
           ))}
         </div>
+
+        {/* Action Center Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+           {/* TODAY STATUS */}
+           <div className="lg:col-span-1 premium-card p-8 bg-gradient-to-br from-slate-900 to-slate-950 border-slate-800 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-125 transition-transform duration-700">
+                 <span className="text-8xl">⏱️</span>
+              </div>
+              <h3 className="text-xl font-black text-white italic uppercase tracking-widest mb-6 flex items-center gap-3">
+                 <span className="w-1.5 h-6 bg-blue-500 rounded-full"></span>
+                 Today's Status
+              </h3>
+              
+              <div className="space-y-6 relative z-10">
+                 <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+                    <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Protocol</span>
+                    <span className="text-lg font-black text-white italic uppercase text-right">Chest & Push</span>
+                 </div>
+                 <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+                    <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Completion</span>
+                    <span className="text-lg font-black text-emerald-400 italic">3 / 5 Sets</span>
+                 </div>
+                 <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+                    <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Posture Sync</span>
+                    <span className="text-lg font-black text-blue-400 italic tracking-tighter">82% <span className="text-slate-600 text-xs tracking-widest">Fidelity</span></span>
+                 </div>
+                 <div className="flex justify-between items-center">
+                    <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Energy Output</span>
+                    <span className="text-lg font-black text-orange-400 italic">210 kcal</span>
+                 </div>
+              </div>
+           </div>
+
+           {/* QUICK ACTIONS */}
+           <div className="lg:col-span-2 premium-card p-8 bg-slate-900/80 border-slate-800">
+              <h3 className="text-xl font-black text-white italic uppercase tracking-widest mb-8 flex items-center gap-3">
+                 <span className="w-1.5 h-6 bg-emerald-500 rounded-full"></span>
+                 Quick Deployment
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
+                 <button onClick={() => navigate('/workout')} className="h-full flex flex-col items-center justify-center gap-4 bg-slate-950 p-6 rounded-2xl border border-slate-800 hover:border-blue-500 hover:bg-slate-900 transition-all group">
+                    <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                       <span className="text-2xl">⚡</span>
+                    </div>
+                    <span className="font-black text-white uppercase tracking-widest text-sm">Start Protocol</span>
+                 </button>
+                 <button onClick={() => navigate('/ai-workout')} className="h-full flex flex-col items-center justify-center gap-4 bg-slate-950 p-6 rounded-2xl border border-slate-800 hover:border-purple-500 hover:bg-slate-900 transition-all group">
+                    <div className="w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                       <span className="text-2xl">🧠</span>
+                    </div>
+                    <span className="font-black text-white uppercase tracking-widest text-sm">View Intel Plan</span>
+                 </button>
+                 <button onClick={() => navigate('/find-trainer')} className="h-full flex flex-col items-center justify-center gap-4 bg-slate-950 p-6 rounded-2xl border border-slate-800 hover:border-emerald-500 hover:bg-slate-900 transition-all group">
+                    <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                       <span className="text-2xl">👨‍🏫</span>
+                    </div>
+                    <span className="font-black text-white uppercase tracking-widest text-sm">Book Elite Node</span>
+                 </button>
+              </div>
+           </div>
+        </div>
+
 
         {/* Neural Analytics Row */}
         <div className="grid lg:grid-cols-2 gap-10">
@@ -130,18 +193,67 @@ const EnhancedDashboard = () => {
                  </h2>
                  <button onClick={() => fetchAIInsights(s)} className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-white transition-colors">{insightsLoading ? 'Syncing...' : 'Force Uplink'}</button>
               </div>
-              <div className="space-y-4">
+               <div className="space-y-4">
                  {insights ? (
-                   <div className="premium-card p-8 bg-slate-800/40 border-blue-500/10">
-                      <pre className="text-slate-300 font-medium whitespace-pre-wrap font-sans text-sm leading-relaxed italic">
-                        {insights.insights}
-                      </pre>
+                   <div className="space-y-4">
+                     {(() => {
+                        let parsed;
+                        try {
+                           // Try to parse if it's stored as a JSON string
+                           parsed = JSON.parse(insights.insights);
+                        } catch (e) {
+                           // If it's pure text, render as fallback
+                           return (
+                              <div className="premium-card p-8 bg-slate-800/40 border-blue-500/10">
+                                 <pre className="text-slate-300 font-medium whitespace-pre-wrap font-sans text-sm leading-relaxed italic">
+                                   {insights.insights}
+                                 </pre>
+                              </div>
+                           );
+                        }
+                        
+                        // It's structured JSON. Render UI Cards.
+                        return (
+                           <div className="grid gap-4">
+                              {parsed.summary && (
+                                <div className="premium-card p-6 border-blue-500/20 bg-blue-500/5">
+                                   <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2">Summary</p>
+                                   <p className="text-white text-sm font-medium">{parsed.summary}</p>
+                                </div>
+                              )}
+                              {parsed.key_improvement && (
+                                <div className="premium-card p-6 border-emerald-500/20 bg-emerald-500/5 flex items-start gap-4">
+                                   <div className="text-2xl mt-1 text-emerald-400">📈</div>
+                                   <div>
+                                      <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-1">Improvement: {parsed.key_improvement.metric}</p>
+                                      <p className="text-white text-sm font-medium">{parsed.key_improvement.msg}</p>
+                                   </div>
+                                </div>
+                              )}
+                              {parsed.risk_warning && (
+                                <div className="premium-card p-6 border-rose-500/20 bg-rose-500/5 flex items-start gap-4">
+                                   <div className="text-2xl mt-1 text-rose-400">⚠️</div>
+                                   <div>
+                                      <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest mb-1">Risk Alert: {parsed.risk_warning.level}</p>
+                                      <p className="text-white text-sm font-medium">{parsed.risk_warning.msg}</p>
+                                   </div>
+                                </div>
+                              )}
+                              {parsed.next_action && (
+                                <div className="premium-card p-6 border-purple-500/20 bg-purple-500/5">
+                                   <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-2">Next Action</p>
+                                   <p className="text-white text-sm font-medium">{parsed.next_action}</p>
+                                </div>
+                              )}
+                           </div>
+                        );
+                     })()}
                    </div>
                  ) : (
                    insightsLoading ? [1,2].map(i => <div key={i} className="h-32 skeleton rounded-3xl"></div>) :
                    <EmptyState icon="🧠" title="Scanning Biometrics..." message="Data stream insufficient for pattern recognition." />
                  )}
-              </div>
+               </div>
            </section>
 
            <section className="space-y-8">

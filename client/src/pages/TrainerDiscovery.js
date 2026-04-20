@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { trainerService } from '../services/api';
 import { motion } from 'framer-motion';
 import { Star, MessageSquare, Calendar, User, ShieldCheck, ChevronRight } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -21,8 +21,17 @@ const TrainerDiscovery = () => {
 
   const fetchTrainers = async () => {
     try {
-      const res = await axios.get('/api/trainers');
-      setTrainers(res.data);
+      const res = await trainerService.getAll();
+      
+      // If DB is empty, provide some elite fallback trainers for the 60 sec demo automatically injected.
+      if (res.data.length === 0) {
+         setTrainers([
+           { _id: 't1', name: 'Althea Vance', specialization: ['Hypertrophy', 'Biomechanics'], rating: 4.9, clients: [1,2,3,4,5], pricePerSession: 80, bio: 'Former competitive bodybuilder. Specializes in neuro-muscular adaptation and symmetry.', imageUrl: 'https://images.unsplash.com/photo-1594381898411-846e7d193883?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80' },
+           { _id: 't2', name: 'Marcus K.', specialization: ['Mobility', 'Rehab'], rating: 4.8, clients: [1,2,3], pricePerSession: 65, bio: 'Physical therapist turned elite coach. Fixes posture deviations and joint impingements.', imageUrl: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80' }
+         ]);
+      } else {
+         setTrainers(res.data);
+      }
       setLoading(false);
     } catch (error) {
       toast.error('Failed to load trainers');
@@ -33,7 +42,12 @@ const TrainerDiscovery = () => {
   const handleBookSession = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('/api/trainers/book', {
+      if(selectedTrainer._id.startsWith('t')) {
+         toast.success('Demo Session booked successfully!');
+         setIsBookingModalOpen(false);
+         return;
+      }
+      await trainerService.bookSession({
         trainerId: selectedTrainer._id,
         ...bookingData
       });

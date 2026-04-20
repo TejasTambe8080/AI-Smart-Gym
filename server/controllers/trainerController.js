@@ -128,11 +128,25 @@ exports.getUserBookings = async (req, res) => {
   }
 };
 
-// Trainer Actions
 exports.getTrainerClients = async (req, res) => {
   try {
     const trainer = await Trainer.findById(req.user.id).populate('clients', 'name email');
-    res.json(trainer.clients);
+    if (!trainer) return res.status(404).json({ message: 'Trainer not found' });
+    
+    const clientsWithStats = await Promise.all(trainer.clients.map(async (client) => {
+      const stats = await UserStats.findOne({ userId: client._id });
+      return {
+        _id: client._id,
+        name: client.name,
+        email: client.email,
+        score: stats ? stats.averagePostureScore : 0,
+        streak: stats ? stats.currentStreak : 0,
+        weakMuscles: stats ? stats.weakMuscles.map(m => m.muscle || m) : [],
+        lastWorkout: stats ? stats.lastWorkoutDate : null
+      };
+    }));
+    
+    res.json(clientsWithStats);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

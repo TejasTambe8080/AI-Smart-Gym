@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { trainerService } from '../services/api';
 import { motion } from 'framer-motion';
 import { Users, Calendar, Activity, MessageSquare, TrendingUp, ChevronRight, User } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -15,7 +15,7 @@ const TrainerDashboard = () => {
 
   const fetchClients = async () => {
     try {
-      const res = await axios.get('/api/trainers/clients');
+      const res = await trainerService.getClients();
       setClients(res.data);
       setStats(prev => ({ ...prev, totalClients: res.data.length }));
       setLoading(false);
@@ -74,28 +74,45 @@ const TrainerDashboard = () => {
           </div>
           <div className="space-y-4">
             {clients.map((client) => (
-              <div key={client._id} className="saas-card !p-4 flex items-center justify-between hover:border-slate-600 transition-all cursor-pointer group">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-center text-slate-500 group-hover:text-blue-500 transition-colors">
-                     <User size={24} />
+              <div key={client._id} className="saas-card !p-6 flex flex-col gap-6 hover:border-slate-600 transition-all cursor-pointer group">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-center text-slate-500 group-hover:text-blue-500 transition-colors">
+                       <User size={24} />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black text-white group-hover:text-blue-400 transition-colors uppercase italic leading-none">{client.name}</h4>
+                      <p className="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-widest font-mono">ID: AI-PX-{client._id.slice(-4)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-black text-white group-hover:text-blue-400 transition-colors uppercase italic leading-none">{client.name}</h4>
-                    <p className="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-widest font-mono">ID: AI-PX-{client._id.slice(-4)}</p>
+                  <div className="flex items-center gap-6">
+                    <div className="text-right px-4 border-r border-slate-800">
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Score</p>
+                      <p className={`text-xl italic font-black ${client.score > 80 ? 'text-blue-400' : 'text-yellow-400'}`}>{client.score || 0}%</p>
+                    </div>
+                    <div className="text-right px-4">
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Streak</p>
+                      <p className="text-xl italic font-black text-emerald-400">{client.streak || 0}</p>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-8">
-                  <div className="hidden md:block text-right">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Status</p>
-                    <p className="text-xs font-bold text-emerald-400">READY</p>
-                  </div>
-                  <div className="text-right px-4 border-l border-slate-800">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Score</p>
-                    <p className={`text-xs font-black ${client.score > 80 ? 'text-blue-400' : 'text-yellow-400'}`}>{client.score}%</p>
-                  </div>
-                  <button className="p-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-500 group-hover:text-white group-hover:border-blue-500/50 transition-all">
-                    <ChevronRight size={16} />
-                  </button>
+                
+                <div className="flex items-center justify-between pt-4 border-t border-slate-800/50">
+                   <div className="flex gap-2">
+                      {client.weakMuscles && client.weakMuscles.length > 0 ? (
+                         client.weakMuscles.map(m => (
+                            <span key={m} className="px-3 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-black uppercase tracking-widest rounded-full">{m} Deficit</span>
+                         ))
+                      ) : (
+                         <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-full">Optimal Structure</span>
+                      )}
+                   </div>
+                   <button 
+                      onClick={(e) => { e.stopPropagation(); toast.success(`Neural suggestion sent to ${client.name}!`) }}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-[10px] uppercase font-black tracking-widest rounded-lg transition-colors"
+                    >
+                      Deploy Intel
+                   </button>
                 </div>
               </div>
             ))}
@@ -106,7 +123,8 @@ const TrainerDashboard = () => {
         <div className="space-y-6">
           <h3 className="text-lg font-black text-white italic uppercase tracking-tight">Strategic Hub</h3>
           <div className="saas-card space-y-6">
-            <div className="p-4 bg-blue-600 rounded-2xl shadow-lg shadow-blue-600/20 group cursor-pointer hover:-translate-y-1 transition-all">
+            <div className="p-4 bg-blue-600 rounded-2xl shadow-lg shadow-blue-600/20 group cursor-pointer hover:-translate-y-1 transition-all"
+                 onClick={() => toast.success('Global broadcast deployed!')}>
               <p className="text-[10px] font-black text-blue-100 uppercase tracking-widest mb-2 leading-none opacity-80">Flash Directive</p>
               <h4 className="text-xl font-black text-white italic leading-tight mb-2 uppercase tracking-tighter">Broadcast Global Suggestion</h4>
               <p className="text-xs font-bold text-blue-100/70 leading-relaxed uppercase tracking-tight">Update neural protocols for all assigned personnel immediately.</p>
