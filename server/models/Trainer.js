@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const trainerSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+  password: { type: String, required: true, select: false },
   bio: { type: String },
   specialization: [{ type: String }],
   experience: { type: Number, default: 0 },
@@ -19,5 +20,24 @@ const trainerSchema = new mongoose.Schema({
   role: { type: String, default: 'trainer' },
   createdAt: { type: Date, default: Date.now }
 });
+
+// Hash password before saving
+trainerSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) {
+    return next();
+  }
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Method to compare password
+trainerSchema.methods.comparePassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
 
 module.exports = mongoose.model('Trainer', trainerSchema);

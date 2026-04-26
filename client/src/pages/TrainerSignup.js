@@ -25,7 +25,7 @@ const TrainerSignup = () => {
     try {
       const res = await trainerService.register(formData);
       toast.success(res.data?.message || 'Trainer registered successfully. Pending verification.');
-      setTimeout(() => navigate('/login'), 2000);
+      setTimeout(() => navigate('/trainer-login'), 2000);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to register trainer. Please try again.');
     } finally {
@@ -137,7 +137,7 @@ const TrainerSignup = () => {
         </form>
 
         <p className="mt-8 text-center text-xs text-slate-500 font-medium">
-          Already verified? <Link to="/login" className="text-blue-500 hover:text-white transition-colors uppercase font-bold">Login Here</Link>
+          Already verified? <Link to="/trainer-login" className="text-blue-500 hover:text-white transition-colors uppercase font-bold">Login Here</Link>
         </p>
       </div>
     </div>

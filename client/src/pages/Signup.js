@@ -184,8 +184,8 @@ const Signup = () => {
                 <option value="general_fitness">General Fitness</option>
                 <option value="weight_loss">Lose Weight</option>
                 <option value="muscle_gain">Build Muscle</option>
-                <option value="strength">Gain Strength</option>
                 <option value="endurance">Improve Endurance</option>
+                <option value="flexibility">Improve Flexibility</option>
               </select>
             </div>
 

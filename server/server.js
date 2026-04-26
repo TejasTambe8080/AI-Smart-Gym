@@ -18,6 +18,8 @@ const errorHandler = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
+const { initializeIndexes } = require('./utils/dbOptimization');
+const { requestLogger } = require('./utils/apiResponse');
 
 const app = express();
 
@@ -37,7 +39,28 @@ app.use('/api/', limiter);
 
 
 // Connect to database
-connectDB();
+const connectAndInitialize = async () => {
+  try {
+    const connection = await connectDB();
+    if (connection) {
+      logger.info('✅ Database connected successfully');
+      
+      // Initialize database indexes only when MongoDB is available
+      try {
+        await initializeIndexes();
+        logger.info('✅ Database indexes initialized');
+      } catch (indexError) {
+        logger.warn(`⚠️ Index initialization skipped: ${indexError.message}`);
+      }
+    } else {
+      logger.warn('⚠️ Starting in fallback mode without MongoDB');
+    }
+  } catch (error) {
+    logger.error(`❌ Failed to connect/initialize database: ${error.message}`);
+  }
+};
+
+connectAndInitialize();
 
 // Middleware
 app.use(express.json());
@@ -66,6 +89,10 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// Request logging middleware
+app.use(requestLogger);
+
 // Log all requests in production
 app.use((req, res, next) => {
   if (process.env.NODE_ENV === 'production') {

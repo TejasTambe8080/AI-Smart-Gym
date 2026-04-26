@@ -9,5 +9,7 @@ router.use(protect);
 router.post('/diet', aiController.getDietPlan);
 router.post('/suggestions', aiController.getWorkoutSuggestions);
 router.post('/insights', aiController.getPerformanceInsights);
+router.post('/coach', aiController.getCoachFeedback);
+router.post('/generate-workout', aiController.generateWorkoutPlan);
 
 module.exports = router;

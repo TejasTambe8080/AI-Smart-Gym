@@ -26,6 +26,8 @@ const getAllUsers = () => {
   }
 };
 
+const normalizeEmail = (email) => email?.trim().toLowerCase();
+
 // Save users to file
 const saveUsers = (users) => {
   fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
@@ -34,7 +36,8 @@ const saveUsers = (users) => {
 // Find user by email
 const findUserByEmail = (email) => {
   const users = getAllUsers();
-  return users.find(u => u.email === email);
+  const normalizedEmail = normalizeEmail(email);
+  return users.find(u => u.email === normalizedEmail);
 };
 
 // Find user by ID
@@ -46,9 +49,11 @@ const findUserById = (id) => {
 // Create new user
 const createUser = (userData) => {
   const users = getAllUsers();
+  const normalizedEmail = normalizeEmail(userData.email);
   const newUser = {
     _id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     ...userData,
+    email: normalizedEmail,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

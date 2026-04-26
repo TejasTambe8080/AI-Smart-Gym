@@ -1,7 +1,11 @@
 // Authentication Controller - Handles signup and login
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const mongoose = require('mongoose');
 const User = require('../models/User');
+const Trainer = require('../models/Trainer');
+const { findUserByEmail, createUser, findUserById, updateUser } = require('../services/userService');
+const { findTrainerByEmail, findTrainerById } = require('../services/trainerService');
 
 // Generate JWT token
 const generateToken = (userId) => {
@@ -14,29 +18,54 @@ const generateToken = (userId) => {
 exports.signup = async (req, res) => {
   try {
     const { name, email, password, age, weight, height, fitnessGoal } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
+    const useFallbackStore = mongoose.connection.readyState !== 1;
 
     // Validation
-    if (!name || !email || !password) {
+    if (!name || !normalizedEmail || !password) {
       return res.status(400).json({ 
         message: 'Please fill in all the required fields' 
       });
     }
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = useFallbackStore
+      ? findUserByEmail(normalizedEmail)
+      : await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return res.status(400).json({ message: 'This email is already registered. Try logging in instead.' });
     }
 
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    if (useFallbackStore) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const createdUser = createUser({
+        name,
+        email: normalizedEmail,
+        password: hashedPassword,
+        age,
+        weight,
+        height,
+        fitnessGoal,
+      });
 
-    // Create new user
+      const token = generateToken(createdUser._id);
+      const userResponse = { ...createdUser };
+      delete userResponse.password;
+
+      console.log(`✅ [AUTH-FALLBACK] User signed up: ${normalizedEmail}`);
+      return res.status(201).json({
+        message: 'User registered successfully',
+        token,
+        user: userResponse,
+        success: true,
+      });
+    }
+
+    // Create new user (password hashing is handled by User model pre-save hook)
     const user = new User({
       name,
-      email,
-      password: hashedPassword,
+      email: normalizedEmail,
+      password,
       age,
       weight,
       height,
@@ -69,27 +98,31 @@ exports.signup = async (req, res) => {
   }
 };
 
-const Trainer = require('../models/Trainer');
-
 // @route   POST /api/auth/login
 // @desc    Login a user
 // @access  Public
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
+    const useFallbackStore = mongoose.connection.readyState !== 1;
 
-    if (!email || !password) {
+    if (!normalizedEmail || !password) {
       return res.status(400).json({ message: 'Please enter your email and password' });
     }
 
     // Check if user exists as User
-    let user = await User.findOne({ email });
+    let user = useFallbackStore
+      ? findUserByEmail(normalizedEmail)
+      : await User.findOne({ email: normalizedEmail }).select('+password');
     let isTrainer = false;
 
     // If not User, check if Trainer
     if (!user) {
-      user = await Trainer.findOne({ email });
-      isTrainer = true;
+      user = useFallbackStore
+        ? findTrainerByEmail(normalizedEmail)
+        : await Trainer.findOne({ email: normalizedEmail }).select('+password');
+      isTrainer = Boolean(user);
     }
 
     if (!user) {
@@ -104,7 +137,7 @@ exports.login = async (req, res) => {
 
     const token = generateToken(user._id);
 
-    const userResponse = user.toObject();
+    const userResponse = typeof user.toObject === 'function' ? user.toObject() : { ...user };
     delete userResponse.password;
 
     console.log(`✅ [AUTH] ${isTrainer ? 'Trainer' : 'User'} logged in: ${email}`);
@@ -129,9 +162,10 @@ exports.login = async (req, res) => {
 // @access  Private
 exports.getProfile = async (req, res) => {
   try {
-    let user = await User.findById(req.userId).select('-password');
+    const useFallbackStore = mongoose.connection.readyState !== 1;
+    let user = useFallbackStore ? findUserById(req.userId) : await User.findById(req.userId).select('-password');
     if (!user) {
-      user = await Trainer.findById(req.userId).select('-password');
+      user = useFallbackStore ? findTrainerById(req.userId) : await Trainer.findById(req.userId).select('-password');
     }
 
     if (!user) {
@@ -151,14 +185,17 @@ exports.getProfile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const { name, age, weight, height, fitnessGoal } = req.body;
+    const useFallbackStore = mongoose.connection.readyState !== 1;
     
     // Determine if User or Trainer (For simplicity, just try updating User first)
-    let user = await User.findByIdAndUpdate(req.userId, {
-      name, age, weight, height, fitnessGoal
-    }, { new: true }).select('-password');
+    let user = useFallbackStore
+      ? updateUser(req.userId, { name, age, weight, height, fitnessGoal })
+      : await User.findByIdAndUpdate(req.userId, {
+          name, age, weight, height, fitnessGoal
+        }, { new: true }).select('-password');
 
     if (!user) {
-      user = await Trainer.findByIdAndUpdate(req.userId, req.body, { new: true }).select('-password');
+      user = useFallbackStore ? null : await Trainer.findByIdAndUpdate(req.userId, req.body, { new: true }).select('-password');
     }
 
     if (!user) {

@@ -15,7 +15,10 @@ const bookingSchema = new mongoose.Schema({
   },
   scheduledAt: { type: Date, required: true },
   notes: { type: String },
-  createdAt: { type: Date, default: Date.now }
+  meetingLink: { type: String, default: null },
+  feedback: { type: String, default: null },
+  createdAt: { type: Date, default: Date.now },
+  completedAt: { type: Date, default: null }
 });
 
 module.exports = mongoose.model('Booking', bookingSchema);

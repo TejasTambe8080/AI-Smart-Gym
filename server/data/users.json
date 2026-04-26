@@ -22,5 +22,41 @@
     "fitnessGoal": "general_fitness",
     "createdAt": "2026-04-20T07:19:17.461Z",
     "updatedAt": "2026-04-20T07:19:17.461Z"
+  },
+  {
+    "_id": "user_1777008634051_v15va9vxo",
+    "name": "Test User",
+    "email": "user+1777008633@example.com",
+    "password": "$2a$10$OzPywmBCi8QxpPWiBGkGv.r.zGdZszsqx2ja4W2Nqz.Be9E/kQVXW",
+    "age": 28,
+    "weight": 75,
+    "height": 180,
+    "fitnessGoal": "general_fitness",
+    "createdAt": "2026-04-24T05:30:34.051Z",
+    "updatedAt": "2026-04-24T05:30:34.051Z"
+  },
+  {
+    "_id": "user_1777009664530_imv2zfad3",
+    "name": "Tejas Tambe",
+    "email": "tejastambe683@gmail.com",
+    "password": "$2a$10$3EWnF3KJ0XJtfJXV6jjvbOiHVvZbEdaTDRE54U.zTmgRXHL2WsSxO",
+    "age": 20,
+    "weight": 70,
+    "height": 175,
+    "fitnessGoal": "general_fitness",
+    "createdAt": "2026-04-24T05:47:44.530Z",
+    "updatedAt": "2026-04-24T05:47:44.530Z"
+  },
+  {
+    "_id": "user_1777010384419_pgqhm3m5y",
+    "name": "Test User",
+    "email": "testuser@example.com",
+    "password": "$2a$10$jvLJsrTdbynBWskMl8Ki5.Yt2WSTJKCH/U9QCwy.1JUlQ/Ptg1cPm",
+    "age": 28,
+    "weight": 71,
+    "height": 180,
+    "fitnessGoal": "general_fitness",
+    "createdAt": "2026-04-24T05:59:44.419Z",
+    "updatedAt": "2026-04-24T05:59:44.419Z"
   }
 ]

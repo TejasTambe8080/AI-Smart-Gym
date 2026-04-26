@@ -1,6 +1,12 @@
 // Error Handler Middleware
+const logger = require('../utils/logger');
+const { errorResponse, validationErrorResponse } = require('../utils/apiResponse');
+
 const errorHandler = (err, req, res, next) => {
-  console.error('Error:', err);
+  logger.error(`Unhandled error in ${req.method} ${req.path}`, {
+    error: err.message,
+    stack: err.stack
+  });
 
   // Default error
   let status = err.status || 500;
@@ -24,6 +30,7 @@ const errorHandler = (err, req, res, next) => {
       acc[key] = err.errors[key].message;
       return acc;
     }, {});
+    return validationErrorResponse(res, Object.values(details));
   }
 
   // Mongoose Duplicate Key Error
@@ -31,21 +38,30 @@ const errorHandler = (err, req, res, next) => {
     status = 409;
     message = 'Duplicate field value';
     const field = Object.keys(err.keyValue)[0];
-    details[field] = `${field} already exists`;
+    return errorResponse(res, `${field} already exists`, null, 409);
   }
 
   // Cast Errors (Invalid MongoDB ID)
   if (err.name === 'CastError') {
     status = 400;
     message = 'Invalid ID format';
+    return errorResponse(res, message, null, 400);
   }
 
-  res.status(status).json({
-    success: false,
-    message,
-    ...(Object.keys(details).length > 0 && { details }),
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
-  });
+  // Rate limit error
+  if (err.status === 429) {
+    return errorResponse(res, 'Too many requests. Please try again later.', null, 429);
+  }
+
+  // Return standardized error response
+  return errorResponse(
+    res, 
+    message, 
+    process.env.NODE_ENV === 'development' ? err : null, 
+    status
+  );
 };
+
+module.exports = errorHandler;
 
 module.exports = errorHandler;

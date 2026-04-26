@@ -1,153 +1,151 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Shield, Target, Brain, Users, Award, Zap, ArrowRight, ChevronLeft, Activity } from 'lucide-react';
 
 const AboutUs = () => {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#020617] text-white font-sans selection:bg-blue-500/30 overflow-x-hidden">
+      {/* Dynamic Background */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[120px] animate-pulse"></div>
+        <div className="absolute bottom-0 left-1/4 w-[600px] h-[600px] bg-purple-600/5 rounded-full blur-[150px]"></div>
+      </div>
+
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 shadow-sm py-4">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#020617]/80 backdrop-blur-xl border-b border-white/5 py-4">
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">💪</div>
-            <span className="text-xl font-bold tracking-tight text-slate-900">Smart Gym</span>
+          <Link to="/" className="flex items-center gap-3 group">
+            <ChevronLeft size={20} className="text-slate-500 group-hover:text-white group-hover:-translate-x-1 transition-all" />
+            <span className="text-xl font-black tracking-tighter text-white uppercase italic">Return // <span className="text-blue-500">Main</span></span>
           </Link>
-          <div className="hidden md:flex gap-8 items-center">
-            <Link to="/" className="text-slate-600 hover:text-blue-600 transition-colors">Home</Link>
-            <Link to="/login" className="text-slate-600 hover:text-blue-600 transition-colors">Sign In</Link>
-            <Link to="/signup" className="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-all">Get Started</Link>
+          <div className="flex gap-4">
+            <Link to="/login" className="px-6 py-2 bg-slate-900 border border-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest hover:border-slate-600 transition-all">Sign In</Link>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <div className="pt-32 pb-20 md:pt-48 md:pb-32 bg-slate-50 px-6">
-        <div className="max-w-4xl mx-auto text-center space-y-6">
-          <h1 className="text-5xl md:text-6xl font-extrabold text-slate-900 tracking-tight">About Smart Gym AI</h1>
-          <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-            We're building the future of fitness. A platform that makes working out smarter, safer, and more effective for everyone.
+      <section className="relative pt-48 pb-32 z-10">
+        <div className="max-w-5xl mx-auto px-6 text-center space-y-12">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="inline-flex items-center gap-3 px-4 py-2 bg-blue-600/10 border border-blue-600/20 rounded-full text-blue-500 text-[10px] font-black uppercase tracking-[0.3em] mb-4 shadow-2xl shadow-blue-500/10"
+          >
+            <Shield size={12} /> The Manifesto // Protocol 01
+          </motion.div>
+          <h1 className="text-6xl lg:text-8xl font-black tracking-tighter leading-none italic uppercase">
+            HUMAN <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-indigo-400 to-purple-500">TRANSCENDENCE</span>
+          </h1>
+          <p className="text-slate-500 text-xl max-w-3xl mx-auto leading-relaxed font-bold italic">
+            FormFix AI is not just a platform. It's an institutional-grade infrastructure designed to optimize the kinetic potential of every human entity.
           </p>
         </div>
-      </div>
+      </section>
 
-      {/* Mission Section */}
-      <section className="py-20 md:py-32 px-6">
-        <div className="max-w-4xl mx-auto space-y-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              <h2 className="text-4xl font-bold text-slate-900">Our Mission</h2>
-              <p className="text-lg text-slate-600 leading-relaxed">
-                We believe fitness should be accessible to everyone. Not just those with personal trainers or gyms nearby. That's why we created Smart Gym AI — to give you a personal AI coach in your pocket.
-              </p>
-              <p className="text-lg text-slate-600 leading-relaxed">
-                Whether you're starting your fitness journey or pushing for new personal records, our AI helps you train smarter, stay injury-free, and reach your goals faster.
-              </p>
-            </div>
-            <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-3xl p-12 text-center">
-              <div className="text-6xl mb-4">🎯</div>
-              <p className="text-slate-600 font-semibold">Perfect Form, Every Time</p>
-            </div>
+      {/* Mission Node */}
+      <section className="py-24 px-6 relative z-10">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-20 items-center">
+             <div className="space-y-10">
+                 <div className="space-y-4">
+                    <h2 className="text-blue-500 font-black uppercase tracking-[0.4em] text-xs">Strategic Objective</h2>
+                    <h3 className="text-4xl lg:text-5xl font-black tracking-tighter italic uppercase">Universal Biometric <br /><span className="text-slate-500">Calibration</span></h3>
+                 </div>
+                 <div className="space-y-8">
+                     <p className="text-slate-400 text-lg font-medium leading-relaxed italic">
+                        We believe that elite-level coaching should be a universal standard, not a premium luxury. Our mission is to democratize institutional sports science through high-fidelity computer vision and neural engineering.
+                     </p>
+                     <p className="text-slate-400 text-lg font-medium leading-relaxed italic">
+                        By translating complex kinetic movements into actionable data vectors, we empower every user to train with the precision of a professional athlete.
+                     </p>
+                 </div>
+                 <div className="flex gap-4">
+                    <div className="flex-1 bg-slate-900 border border-slate-800 p-8 rounded-3xl space-y-4 group hover:border-blue-500/30 transition-all">
+                       <Target className="text-blue-500" size={32} />
+                       <h4 className="text-white font-black uppercase text-sm tracking-widest italic">Precision Target</h4>
+                       <p className="text-xs text-slate-500 font-bold uppercase leading-relaxed">Eliminating injury risk through 99.9% posture fidelity.</p>
+                    </div>
+                    <div className="flex-1 bg-slate-900 border border-slate-800 p-8 rounded-3xl space-y-4 group hover:border-purple-500/30 transition-all">
+                       <Zap className="text-purple-500" size={32} />
+                       <h4 className="text-white font-black uppercase text-sm tracking-widest italic">Neural Speed</h4>
+                       <p className="text-xs text-slate-500 font-bold uppercase leading-relaxed">Instant recursive feedback during protocol execution.</p>
+                    </div>
+                 </div>
+             </div>
+             <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-[3rem] blur opacity-10 group-hover:opacity-30 transition duration-1000"></div>
+                <div className="relative bg-slate-900 border border-white/5 p-4 rounded-[2.5rem] overflow-hidden shadow-2xl">
+                   <img 
+                     src="/manifesto_viz.png" 
+                     alt="Neural Manifesto Visualization" 
+                     className="w-full h-auto rounded-[1.8rem] grayscale hover:grayscale-0 transition-all duration-700" 
+                   />
+                </div>
+             </div>
           </div>
         </div>
       </section>
 
-      {/* Values Section */}
-      <section className="py-20 md:py-32 px-6 bg-slate-50">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl font-bold text-slate-900 text-center mb-16">Our Values</h2>
+      {/* Values Matrix */}
+      <section className="py-32 px-6 bg-slate-950/50 relative z-10">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-24 space-y-4">
+            <h2 className="text-blue-500 font-black uppercase tracking-[0.2em] text-xs">Core Logic</h2>
+            <h3 className="text-5xl font-black tracking-tighter italic uppercase">PLATFORM PILLARS</h3>
+          </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
-              {
-                icon: '❤️',
-                title: 'Health First',
-                desc: 'Your safety and wellbeing comes before everything. We prioritize injury prevention and sustainable fitness.'
-              },
-              {
-                icon: '🎓',
-                title: 'Accessibility',
-                desc: 'Fitness technology should be available to everyone, regardless of their experience level or budget.'
-              },
-              {
-                icon: '🔬',
-                title: 'Science-Driven',
-                desc: 'Everything we build is backed by sports science and biomechanics research.'
-              },
-              {
-                icon: '🤝',
-                title: 'Community',
-                desc: 'We believe in building a supportive fitness community where everyone can celebrate progress together.'
-              },
-              {
-                icon: '🔐',
-                title: 'Privacy',
-                desc: 'Your data is yours. We never sell or share your personal information with anyone.'
-              },
-              {
-                icon: '⚡',
-                title: 'Innovation',
-                desc: 'We constantly improve our technology to give you the best fitness experience possible.'
-              }
+              { icon: <Award className="text-blue-500" />, title: 'Elite Standards', desc: 'Every recommendation is calibrated against elite athletes and institutional sports science research.' },
+              { icon: <Shield className="text-emerald-500" />, title: 'Sovereign Privacy', desc: 'Proprietary local-first processing ensures biometric data streaming never compromises individual privacy.' },
+              { icon: <Brain className="text-purple-500" />, title: 'Neural Evolution', desc: 'Constant platform refinement through large-scale LLM synthesis and recursive AI model training.' },
+              { icon: <Users className="text-amber-500" />, title: 'Global Collective', desc: 'Building a high-performance network where progress is shared and excellence is the default.' },
+              { icon: <Activity className="text-rose-500" />, title: 'Radical Honesty', desc: 'Biometric stats tell the truth. We provide the hard data needed for genuine physical breakthrough.' },
+              { icon: <Target className="text-cyan-500" />, title: 'Singular Focus', desc: 'A platform stripped of distractions, engineered solely for your physical and mental optimization.' }
             ].map((value, idx) => (
-              <div key={idx} className="p-8 rounded-2xl bg-white border border-slate-100 hover:border-blue-200 hover:shadow-lg transition-all">
-                <div className="text-5xl mb-4">{value.icon}</div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">{value.title}</h3>
-                <p className="text-slate-600">{value.desc}</p>
+              <div key={idx} className="p-10 rounded-[2.5rem] bg-slate-900/40 border border-slate-800 hover:border-blue-500/30 hover:bg-slate-900 transition-all group relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+                   {value.icon}
+                </div>
+                <div className="w-14 h-14 bg-slate-950 rounded-2xl border border-slate-800 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                   {React.cloneElement(value.icon, { size: 24 })}
+                </div>
+                <h3 className="text-xl font-black text-white mb-4 uppercase italic tracking-tight group-hover:text-blue-500 transition-colors">{value.title}</h3>
+                <p className="text-slate-500 font-bold text-sm leading-relaxed italic">{value.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Team Section */}
-      <section className="py-20 md:py-32 px-6">
+      {/* Final Directive */}
+      <section className="py-40 px-6 relative z-10">
         <div className="max-w-4xl mx-auto text-center space-y-12">
-          <div className="space-y-4">
-            <h2 className="text-4xl font-bold text-slate-900">Built by Fitness Enthusiasts</h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Our team combines expertise in AI, fitness science, and software engineering to create tools that actually help people reach their goals.
+          <div className="space-y-6">
+            <h2 className="text-5xl lg:text-7xl font-black text-white italic uppercase tracking-tighter leading-none">JOIN THE <br /><span className="text-blue-600 italic">ELEVATION</span></h2>
+            <p className="text-slate-500 text-lg font-bold uppercase tracking-[0.3em] max-w-2xl mx-auto">
+              Your previous limits were merely the baseline of our neural model.
             </p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {[
-              { role: 'AI & Machine Learning', desc: 'Building computer vision models to analyze movement and form' },
-              { role: 'Fitness Science', desc: 'Ensuring our recommendations are backed by sports science' },
-              { role: 'Product & Design', desc: 'Making complex fitness tech simple and intuitive' },
-              { role: 'Engineering', desc: 'Creating fast, reliable, and secure platforms' }
-            ].map((item, idx) => (
-              <div key={idx} className="p-8 rounded-2xl bg-slate-50 border border-slate-100">
-                <h3 className="text-lg font-bold text-slate-900 mb-2">{item.role}</h3>
-                <p className="text-slate-600">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 md:py-32 px-6 bg-gradient-to-r from-blue-600 to-blue-700">
-        <div className="max-w-4xl mx-auto text-center space-y-8">
-          <div className="space-y-4">
-            <h2 className="text-4xl font-bold text-white">Ready to Get Started?</h2>
-            <p className="text-lg text-blue-100 max-w-2xl mx-auto">
-              Join thousands of people who are already using Smart Gym AI to train smarter and reach their fitness goals.
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/signup" className="bg-white text-blue-600 px-8 py-3 rounded-lg font-bold hover:bg-blue-50 transition-all">
-              Get Started Free
-            </Link>
-            <Link to="/login" className="bg-blue-500 text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-400 transition-all">
-              Sign In
+          <div className="flex flex-col sm:flex-row gap-6 justify-center">
+            <Link to="/signup" className="h-20 px-14 bg-white text-[#020617] rounded-3xl font-black uppercase text-sm tracking-[0.3em] hover:shadow-[0_20px_60px_rgba(255,255,255,0.2)] transition-all flex items-center justify-center gap-4 italic group">
+              Initialize Protocol <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform" />
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 px-6 bg-slate-50 border-t border-slate-100">
-        <div className="max-w-7xl mx-auto text-center text-sm text-slate-600">
-          <p>© 2026 Smart Gym AI. Building the future of fitness.</p>
+      {/* Footer Bridge */}
+      <footer className="py-16 px-6 border-t border-white/5 bg-slate-950 relative z-10">
+        <div className="max-w-7xl mx-auto text-center space-y-4">
+           <div className="flex items-center justify-center gap-3 opacity-50 contrast-150">
+              <Activity className="text-blue-600" size={20} />
+              <span className="font-black text-white tracking-tighter uppercase italic">FormFix<span className="text-blue-600">AI</span></span>
+           </div>
+           <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.5em] italic">© 2026 Institutional Performance Protocol.</p>
         </div>
       </footer>
     </div>

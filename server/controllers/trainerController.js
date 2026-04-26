@@ -3,24 +3,55 @@ const User = require('../models/User');
 const Booking = require('../models/Booking');
 const Message = require('../models/Message');
 const UserStats = require('../models/UserStats');
+const mongoose = require('mongoose');
 
 const bcrypt = require('bcryptjs');
+const {
+  findTrainerByEmail,
+  findTrainerById,
+  createTrainer,
+  updateTrainer: updateTrainerFallback,
+  getAllTrainers: getAllTrainersFallback,
+} = require('../services/trainerService');
 
 // Trainer Registration
 exports.registerTrainer = async (req, res) => {
   try {
     const { name, email, password, specialization, experience, pricePerSession, bio } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
+    const useFallbackStore = mongoose.connection.readyState !== 1;
     
-    const existingTrainer = await Trainer.findOne({ email });
+    const existingTrainer = useFallbackStore
+      ? findTrainerByEmail(normalizedEmail)
+      : await Trainer.findOne({ email: normalizedEmail });
     if (existingTrainer) {
       return res.status(400).json({ message: 'Trainer with this email already exists' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    if (useFallbackStore) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const createdTrainer = createTrainer({
+        name,
+        email: normalizedEmail,
+        password: hashedPassword,
+        specialization: specialization ? specialization.split(',') : [],
+        experience,
+        pricePerSession,
+        bio,
+        isVerified: false,
+      });
+
+      const trainerResponse = { ...createdTrainer };
+      delete trainerResponse.password;
+
+      return res.status(201).json({ message: 'Trainer registered successfully. Pending verification.', trainer: trainerResponse });
+    }
+
+    // Password hashing is handled by Trainer model pre-save hook
     const trainer = new Trainer({
       name,
-      email,
-      password: hashedPassword,
+      email: normalizedEmail,
+      password,
       specialization: specialization ? specialization.split(',') : [],
       experience,
       pricePerSession,
@@ -29,7 +60,10 @@ exports.registerTrainer = async (req, res) => {
     });
 
     await trainer.save();
-    res.status(201).json({ message: 'Trainer registered successfully. Pending verification.', trainer: { id: trainer._id, name: trainer.name, email: trainer.email } });
+    const trainerResponse = trainer.toObject();
+    delete trainerResponse.password;
+    
+    res.status(201).json({ message: 'Trainer registered successfully. Pending verification.', trainer: trainerResponse });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -39,7 +73,10 @@ exports.registerTrainer = async (req, res) => {
 exports.verifyTrainer = async (req, res) => {
   try {
     const { id } = req.params;
-    const trainer = await Trainer.findByIdAndUpdate(id, { isVerified: true }, { new: true });
+    const useFallbackStore = mongoose.connection.readyState !== 1;
+    const trainer = useFallbackStore
+      ? updateTrainerFallback(id, { isVerified: true })
+      : await Trainer.findByIdAndUpdate(id, { isVerified: true }, { new: true });
     if (!trainer) return res.status(404).json({ message: 'Trainer not found' });
     res.json({ message: 'Trainer verified', trainer });
   } catch (error) {
@@ -50,7 +87,10 @@ exports.verifyTrainer = async (req, res) => {
 // Get single trainer
 exports.getTrainer = async (req, res) => {
   try {
-    const trainer = await Trainer.findById(req.params.id).select('-password');
+    const useFallbackStore = mongoose.connection.readyState !== 1;
+    const trainer = useFallbackStore
+      ? findTrainerById(req.params.id)
+      : await Trainer.findById(req.params.id).select('-password');
     if (!trainer) return res.status(404).json({ message: 'Trainer not found' });
     res.json(trainer);
   } catch (error) {
@@ -67,7 +107,10 @@ exports.updateTrainer = async (req, res) => {
     delete updates.isVerified;
     delete updates.email; // Usually don't update email directly
     
-    const trainer = await Trainer.findByIdAndUpdate(req.params.id, updates, { new: true }).select('-password');
+    const useFallbackStore = mongoose.connection.readyState !== 1;
+    const trainer = useFallbackStore
+      ? updateTrainerFallback(req.params.id, updates)
+      : await Trainer.findByIdAndUpdate(req.params.id, updates, { new: true }).select('-password');
     if (!trainer) return res.status(404).json({ message: 'Trainer not found' });
     res.json(trainer);
   } catch (error) {
@@ -78,7 +121,8 @@ exports.updateTrainer = async (req, res) => {
 // Delete trainer
 exports.deleteTrainer = async (req, res) => {
   try {
-    const trainer = await Trainer.findByIdAndDelete(req.params.id);
+    const useFallbackStore = mongoose.connection.readyState !== 1;
+    const trainer = useFallbackStore ? null : await Trainer.findByIdAndDelete(req.params.id);
     if (!trainer) return res.status(404).json({ message: 'Trainer not found' });
     res.json({ message: 'Trainer deleted successfully' });
   } catch (error) {
@@ -90,6 +134,12 @@ exports.deleteTrainer = async (req, res) => {
 exports.getAllTrainers = async (req, res) => {
   try {
     // Only return verified trainers for common users
+    const useFallbackStore = mongoose.connection.readyState !== 1;
+    if (useFallbackStore) {
+      const trainers = getAllTrainersFallback().filter((trainer) => (req.user && req.user.role === 'admin') ? true : trainer.isVerified);
+      return res.json(trainers.map(({ password, ...trainer }) => trainer));
+    }
+
     const query = req.user && req.user.role === 'admin' ? {} : { isVerified: true };
     const trainers = await Trainer.find(query).select('-password');
     res.json(trainers);
@@ -121,10 +171,20 @@ exports.bookSession = async (req, res) => {
 
 exports.getUserBookings = async (req, res) => {
   try {
-    const bookings = await Booking.find({ userId: req.user.id }).populate('trainerId', 'name specialization imageUrl');
+    const userId = req.user?.id || req.userId;
+    
+    // Check if MongoDB is connected
+    if (mongoose.connection.readyState !== 1) {
+      // Return empty bookings in fallback mode
+      return res.json([]);
+    }
+
+    const bookings = await Booking.find({ userId }).populate('trainerId', 'name specialization imageUrl');
     res.json(bookings);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error fetching user bookings:', error.message);
+    // Return empty array on error instead of 500
+    res.json([]);
   }
 };
 
@@ -190,6 +250,101 @@ exports.getChatHistory = async (req, res) => {
       ]
     }).sort('createdAt');
     res.json(messages);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Update Booking Status
+exports.updateBookingStatus = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const { status, feedback } = req.body;
+    
+    if (!['Confirmed', 'Rejected', 'Completed', 'Cancelled'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status update' });
+    }
+
+    const updateData = { status };
+    
+    // Generate meeting link when status is confirmed
+    if (status === 'Confirmed') {
+      updateData.meetingLink = `https://meet.jitsi.si/formfix-${bookingId}`;
+    }
+    
+    // Add feedback and completion time if marking as complete
+    if (status === 'Completed') {
+      updateData.feedback = feedback || '';
+      updateData.completedAt = new Date();
+    }
+
+    const booking = await Booking.findOneAndUpdate(
+      { _id: bookingId, trainerId: req.user.id },
+      updateData,
+      { new: true }
+    ).populate('userId', 'name email');
+
+    if (!booking) return res.status(404).json({ message: 'Booking not found or not authorized' });
+    
+    res.json({ 
+      message: `Booking ${status.toLowerCase()} successfully`, 
+      booking,
+      meetingLink: booking.meetingLink || null
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get Dashboard Stats
+exports.getDashboardStats = async (req, res) => {
+  try {
+    const trainerId = req.user.id;
+    
+    const totalClients = await Trainer.findById(trainerId).then(t => t.clients.length);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const todaySessions = await Booking.countDocuments({
+      trainerId,
+      scheduledAt: { $gte: today, $lt: tomorrow },
+      status: 'Confirmed'
+    });
+
+    const pendingBookings = await Booking.countDocuments({
+      trainerId,
+      status: 'Pending'
+    });
+
+    // Average client score
+    const trainer = await Trainer.findById(trainerId).populate('clients');
+    let avgScore = 0;
+    if (trainer.clients.length > 0) {
+      const stats = await UserStats.find({ userId: { $in: trainer.clients.map(c => c._id) } });
+      const totalScore = stats.reduce((acc, curr) => acc + (curr.averagePostureScore || 0), 0);
+      avgScore = stats.length > 0 ? (totalScore / stats.length).toFixed(1) : 0;
+    }
+
+    res.json({
+      totalClients,
+      todaySessions,
+      pendingBookings,
+      avgClientScore: avgScore
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get All Trainer Bookings
+exports.getTrainerBookings = async (req, res) => {
+  try {
+    const bookings = await Booking.find({ trainerId: req.user.id })
+      .populate('userId', 'name email')
+      .sort('-scheduledAt');
+    res.json(bookings);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

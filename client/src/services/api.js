@@ -16,10 +16,14 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Auth Services
 export const authService = {
   signup: (data) => api.post('/auth/signup', data),
   login: (data) => api.post('/auth/login', data),
+  getProfile: () => api.get('/auth/profile'),
+  updateProfile: (data) => api.put('/auth/update', data),
+};
+
+export const userService = {
   getProfile: () => api.get('/auth/profile'),
   updateProfile: (data) => api.put('/auth/update', data),
 };
@@ -28,9 +32,20 @@ export const authService = {
 export const trainerService = {
   register: (data) => api.post('/trainers/register', data),
   getAll: () => api.get('/trainers'),
+  getTrainer: (id) => api.get(`/trainers/${id}`),
+  verifyTrainer: (id) => api.post(`/trainers/verify/${id}`),
   bookSession: (data) => api.post('/trainers/book', data),
+  getUserBookings: () => api.get('/trainers/bookings/user'),
+  getTrainerBookings: () => api.get('/trainers/bookings'),
   getMyBookings: () => api.get('/trainers/my-bookings'),
   getClients: () => api.get('/trainers/clients'),
+  getClientStats: (clientId) => api.get(`/trainers/clients/${clientId}/stats`),
+  getDashboardStats: () => api.get('/trainers/dashboard/stats'),
+  updateBookingStatus: (id, statusData) => api.put(`/trainers/bookings/${id}`, statusData),
+  updateProfile: (id, data) => api.put(`/trainers/profile/${id}`, data),
+  deleteTrainer: (id) => api.delete(`/trainers/${id}`),
+  sendMessage: (data) => api.post('/trainers/messages', data),
+  getChatHistory: (contactId) => api.get(`/trainers/messages/${contactId}`),
 };
 
 // Workout Services
@@ -81,6 +96,8 @@ export const aiService = {
   getDietPlan: (data) => api.post('/ai/diet', data),
   getSuggestions: (data) => api.post('/ai/suggestions', data),
   getInsights: (data) => api.post('/ai/insights', data),
+  getCoachFeedback: (data) => api.post('/ai/coach', data),
+  generateWorkoutPlan: (data) => api.post('/ai/generate-workout', data),
 };
 
 export default api;

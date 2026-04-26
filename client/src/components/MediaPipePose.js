@@ -99,9 +99,18 @@ const MediaPipePose = ({ onPoseDetected, isRunning }) => {
       }
     } catch (err) {
       console.error("Camera Error:", err);
-      setError(err.name === 'NotAllowedError' ? "Permission Denied: Camera access is essential for biometric sync." : "Optical Sensor Failure: Restarting...");
-      // Auto-retry if not a permission issue
-      if (err.name !== 'NotAllowedError') {
+      if (!window.isSecureContext) {
+        setError("Insecure Context: Camera access requires HTTPS or localhost.");
+      } else if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setError("Permission Denied: Please click the camera icon in your browser's address bar and allow access to continue.");
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        setError("No Camera Found: Please connect a camera and ensure it's not being used by another app.");
+      } else {
+        setError("Optical Sensor Failure: " + err.message);
+      }
+      
+      // Auto-retry ONLY for hardware glitches, not for permission/missing issues
+      if (!['NotAllowedError', 'PermissionDeniedError', 'NotFoundError', 'DevicesNotFoundError'].includes(err.name)) {
         retryTimeoutRef.current = setTimeout(startCamera, 3000);
       }
     }
@@ -160,6 +169,11 @@ const MediaPipePose = ({ onPoseDetected, isRunning }) => {
     setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
   };
 
+  const retryInitialization = () => {
+    setError(null);
+    startCamera();
+  };
+
   return (
     <div className="relative w-full h-full bg-slate-950 rounded-[3rem] overflow-hidden border-4 border-slate-800 shadow-2xl group">
       <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover grayscale opacity-40" />
@@ -176,16 +190,25 @@ const MediaPipePose = ({ onPoseDetected, isRunning }) => {
 
       {error && (
         <div className="absolute inset-0 z-30 bg-slate-950/90 flex items-center justify-center p-10 text-center animate-enter">
-           <div className="space-y-6">
-              <div className="text-6xl">⚠️</div>
-              <p className="text-rose-400 font-black uppercase tracking-widest text-sm leading-relaxed">{error}</p>
-              <div className="flex flex-col gap-4">
-                <button onClick={startCamera} className="btn-primary h-14 !px-10">Re-initialize Link</button>
-                <div className="flex items-center gap-2">
+           <div className="max-w-md space-y-6">
+              <div className="text-6xl animate-bounce">⚠️</div>
+              <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Neural Link Interrupted</h3>
+              <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] leading-relaxed px-4">{error}</p>
+              
+              <div className="flex flex-col gap-4 pt-4">
+                <button 
+                  onClick={retryInitialization} 
+                  className="h-16 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-blue-600/30 active:scale-95"
+                >
+                  ⚡ Re-Initialize Optical Sensors
+                </button>
+                
+                <div className="flex items-center gap-4">
                   <div className="flex-1 h-[1px] bg-slate-800"></div>
-                  <span className="text-[10px] font-black text-slate-600 uppercase">Or Secure Demo Flow</span>
+                  <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Alternative Protocol</span>
                   <div className="flex-1 h-[1px] bg-slate-800"></div>
                 </div>
+
                 <button 
                   onClick={() => {
                     setError(null);
@@ -197,8 +220,8 @@ const MediaPipePose = ({ onPoseDetected, isRunning }) => {
                       const dummyLandmarks = Array(33).fill(0).map((_, i) => ({
                         x: 0.5 + Math.sin(frame/20 + i) * 0.1,
                         y: 0.5 + Math.cos(frame/20 + i) * 0.1,
-                        z: 0,
-                        visibility: 0.9
+                        z: 0.0,
+                        visibility: 0.95
                       }));
                       onPoseDetected({ poseLandmarks: dummyLandmarks });
                       drawSkeleton({ poseLandmarks: dummyLandmarks });
@@ -207,10 +230,14 @@ const MediaPipePose = ({ onPoseDetected, isRunning }) => {
                     };
                     simulate();
                   }} 
-                  className="px-6 py-3 bg-blue-600/20 border border-blue-500/30 rounded-2xl text-blue-400 font-black uppercase text-xs tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-lg shadow-blue-500/10"
+                  className="h-14 bg-slate-900 border border-slate-800 hover:border-slate-600 text-slate-500 hover:text-white rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all italic"
                 >
-                  🚀 Run Biometric Simulation
+                  🚀 Launch Biometric Simulator
                 </button>
+              </div>
+
+              <div className="pt-6">
+                 <p className="text-[9px] font-black text-slate-700 uppercase tracking-widest">Tech Support: Ensure your browser permits camera access for this domain.</p>
               </div>
            </div>
         </div>

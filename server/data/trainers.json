@@ -1,0 +1,19 @@
+[
+  {
+    "_id": "trainer_1777008634341_sp4ph7j39",
+    "name": "Test Trainer",
+    "email": "trainer+1777008633@example.com",
+    "password": "$2a$10$jbU.qiEsKCgoP0nUEVP6Duao/K51ypYNCt1t3Cg.ht8fxOQdN.ZNO",
+    "specialization": [
+      "Strength",
+      " Mobility"
+    ],
+    "experience": 5,
+    "pricePerSession": 50,
+    "bio": "Fallback trainer",
+    "isVerified": false,
+    "role": "trainer",
+    "createdAt": "2026-04-24T05:30:34.341Z",
+    "updatedAt": "2026-04-24T05:30:34.341Z"
+  }
+]

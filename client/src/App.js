@@ -28,6 +28,12 @@ const Journey = lazy(() => import('./pages/Journey'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const TrainerDiscovery = lazy(() => import('./pages/TrainerDiscovery'));
 const TrainerDashboard = lazy(() => import('./pages/TrainerDashboard'));
+const TrainerLogin = lazy(() => import('./pages/TrainerLogin'));
+const TrainerProfile = lazy(() => import('./pages/TrainerProfile'));
+const TrainerBookings = lazy(() => import('./pages/TrainerBookings'));
+const TrainerClients = lazy(() => import('./pages/TrainerClients'));
+const TrainerMessages = lazy(() => import('./pages/TrainerMessages'));
+const TrainerManagement = lazy(() => import('./pages/TrainerManagement'));
 
 // Loading Screen Component
 const NeuralPulse = () => (
@@ -63,6 +69,13 @@ const AppRoutes = () => {
       <Route path="/settings" element={<Settings />} />
       <Route path="/notifications" element={<Notifications />} />
       
+      {/* Trainer Panel Routes */}
+      <Route path="/trainer-profile" element={<TrainerProfile />} />
+      <Route path="/trainer-bookings" element={<TrainerBookings />} />
+      <Route path="/trainer-clients" element={<TrainerClients />} />
+      <Route path="/trainer-chat" element={<TrainerMessages />} />
+      <Route path="/manage-trainers" element={<TrainerManagement />} />
+      
       {/* Default redirect */}
       <Route path="/" element={<Navigate to={isTrainer ? "/trainer-dashboard" : "/dashboard"} replace />} />
       <Route path="*" element={<Navigate to={isTrainer ? "/trainer-dashboard" : "/dashboard"} replace />} />
@@ -93,6 +106,7 @@ function App() {
             {/* Public routes */}
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/trainer-login" element={<TrainerLogin />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/trainer-signup" element={<TrainerSignup />} />
             <Route path="/about" element={<AboutUs />} />

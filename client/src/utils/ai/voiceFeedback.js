@@ -24,9 +24,21 @@ export class VoiceFeedback {
       'Good job! Well done!': 'अच्छा काम! बहुत बढ़िया!',
       'Average performance. Try to improve your form.': 'औसत प्रदर्शन। अपने फॉर्म को सुधारने का प्रयास करें।',
       'Focus on good form and technique.': 'अच्छे फॉर्म और तकनीक पर ध्यान दें।',
-      'Keep your back straight - avoid leaning forward': 'अपनी पीठ सीधी रखें - आगे झुकने से बचें'
+      'Keep your back straight - avoid leaning forward': 'अपनी पीठ सीधी रखें - आगे झुकने से बचें',
+      'Keep your back straight, lean less forward': 'अपनी पीठ सीधी रखें, आगे कम झुकें',
+      'Align your knees over your toes': 'घुटनों को पंजों के ऊपर रखें',
+      'Keep shoulders level and engaged': 'कंधों को बराबर और सक्रिय रखें',
+      'Great job! Your form looks good.': 'बहुत अच्छा! आपका फॉर्म सही है।',
+      'Correct your posture now': 'अभी अपनी मुद्रा ठीक करें',
+      'Straighten your back': 'अपनी पीठ सीधी करें',
+      'Move your knees back': 'अपने घुटनों को पीछे रखें',
+      'Level your shoulders': 'कंधों को सीधा रखें'
     };
     return translations[message] || '';
+  }
+
+  speakHindi(message, rate = 0.9, pitch = 1.0) {
+    this.speak(message, rate, pitch, 'hi-IN');
   }
 
   // Check if can speak (cooldown check)
@@ -86,11 +98,45 @@ export class VoiceFeedback {
   feedbackPosture(feedback) {
     if (Array.isArray(feedback)) {
       feedback.forEach((msg) => {
-        this.speakBilingual(msg);
+        const hindi = this.getTranslation(msg);
+        if (hindi) {
+          this.speakHindi(hindi, 0.88, 1.0);
+        } else {
+          this.speakBilingual(msg);
+        }
       });
     } else {
-      this.speakBilingual(feedback);
+      const hindi = this.getTranslation(feedback);
+      if (hindi) {
+        this.speakHindi(hindi, 0.88, 1.0);
+      } else {
+        this.speakBilingual(feedback);
+      }
     }
+  }
+
+  // Provide Hindi-only posture feedback
+  feedbackPostureHindi(feedback) {
+    if (Array.isArray(feedback)) {
+      feedback.forEach((msg) => {
+        const hindi = this.getTranslation(msg) || msg;
+        this.speakHindi(hindi, 0.88, 1.0);
+      });
+    } else {
+      const hindi = this.getTranslation(feedback) || feedback;
+      this.speakHindi(hindi, 0.88, 1.0);
+    }
+  }
+
+  feedbackStartHindi(exerciseType) {
+    const readable = exerciseType.replace('_', ' ');
+    const message = `आपका ${readable} वर्कआउट शुरू हो गया है। शुभकामनाएँ!`;
+    this.speakHindi(message, 0.9, 1.0);
+  }
+
+  feedbackRepsHindi(currentReps, targetReps) {
+    const message = `${currentReps} में से ${targetReps} रेप्स पूरे हो गए हैं।`;
+    this.speakHindi(message, 0.9, 1.0);
   }
 
   // Provide rep feedback
@@ -151,6 +197,20 @@ export class VoiceFeedback {
       message += 'Keep working on your form.';
     }
     this.speak(message, 0.9, 1.0);
+  }
+
+  feedbackMotivationHindi() {
+    const messages = [
+      'बहुत बढ़िया, जारी रखें!',
+      'आप यह कर सकते हैं!',
+      'शानदार मेहनत!',
+      'लगभग पहुँच गए!',
+      'एक और सेट करें!',
+      'मजबूती बनाए रखें!',
+      'आप बहुत अच्छे हैं!',
+    ];
+    const message = messages[Math.floor(Math.random() * messages.length)];
+    this.speakHindi(message, 0.95, 1.05);
   }
 }
 
